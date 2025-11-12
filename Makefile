@@ -4,7 +4,7 @@ NAME=philo
 CC=cc
 CFLAGS= -g -Wall -Wextra -Werror
 
-SRCS:= philo.c
+SRCS:= philo.c utils.c
 OBJS:=$(SRCS:%.c=%.o)
 
 
