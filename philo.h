@@ -10,14 +10,25 @@
 
 typedef struct s_philo
 {
+    pthread_t t;
     int n;
     int time_to_die;
     int time_to_eat;
     int time_to_sleep;
-    int number_of_times_ate;
+    int number_of_times_eaten;
 } t_philo;
 
+typedef struct s_philos
+{
+    int number_of_philosophers;
+    int time_to_die;
+    int time_to_eat;
+    int time_to_sleep;
+    int number_of_times_each_philosopher_must_eat;
+    t_philo *philos;
+} t_philos;
+
 int custom_atoi(char *str, int *err);
-int wrong_args(int ac, char *av[]);
+int check_and_store(int ac, char *av[], t_philos *args);
 
 #endif
