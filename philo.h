@@ -29,4 +29,6 @@ typedef struct s_philos
 int custom_atoi(char *str, int *err);
 int check_and_store(int ac, char *av[], t_philos *args);
 
+void run_threads();
+
 #endif

@@ -18,68 +18,68 @@ long get_ms(void)
     3.Which fork can be used by current phil and is locked in that duration
 */
 
-void *live(void *philo)
-{
-    /*
-        timestamp_in_ms X has taken a fork
-        timestamp_in_ms X has taken a fork
-        timestamp_in_ms X is eating
-        timestamp_in_ms X is sleeping
-        timestamp_in_ms X is thinking
-        timestamp_in_ms X died
-    */
-    t_philos *ph;
-    long start_time;
-    long last_meal;
+// void *live(void *philo)
+// {
+//     /*
+//         timestamp_in_ms X has taken a fork
+//         timestamp_in_ms X has taken a fork
+//         timestamp_in_ms X is eating
+//         timestamp_in_ms X is sleeping
+//         timestamp_in_ms X is thinking
+//         timestamp_in_ms X died
+//     */
+//     t_philos *ph;
+//     long start_time;
+//     long last_meal;
 
-    start_time = get_ms();
-    // pthread_mutex_lock();
-    printf("%d has taken a fork\n");
-    // pthread_mutex_lock();
-    printf("%d has taken a fork\n");
-    printf("%d is eating\n");
-    usleep(ph->time_to_eat * 1000);
-    if (get_ms() - start_time == ph->time_to_eat)
-    {
-        printf("%d is sleeping\n");
-        // pthread_mutex_unlock();
-        // pthread_mutex_unlock();
-    }
-    usleep(ph->time_to_sleep * 1000);
-    if (get_ms() - start_time - ph->time_to_eat == ph->time_to_sleep)
-        printf("%d is thinking\n");
-    return NULL;
-}
+//     start_time = get_ms();
+//     // pthread_mutex_lock();
+//     printf("%d has taken a fork\n");
+//     // pthread_mutex_lock();
+//     printf("%d has taken a fork\n");
+//     printf("%d is eating\n");
+//     usleep(ph->time_to_eat * 1000);
+//     if (get_ms() - start_time == ph->time_to_eat)
+//     {
+//         printf("%d is sleeping\n");
+//         // pthread_mutex_unlock();
+//         // pthread_mutex_unlock();
+//     }
+//     usleep(ph->time_to_sleep * 1000);
+//     if (get_ms() - start_time - ph->time_to_eat == ph->time_to_sleep)
+//         printf("%d is thinking\n");
+//     return NULL;
+// }
 
-t_philos *create_phils(t_philos *philos)
-{
-    int i;
-    pthread_t temp;
+// t_philos *create_phils(t_philos *philos)
+// {
+//     int i;
+//     pthread_t temp;
 
-    philos->philos = malloc(philos->number_of_philosophers * sizeof(t_philo));
-    if (!philos->philos)
-    {
-        free(philos);
-        printf("Error: Couldn't allocate memory for philosophers\n");
-        return NULL;
-    }
-    i = 0;
-    while (i < philos->number_of_philosophers)
-    {
-        temp = pthread_create(philos->philos[i].t, NULL, live, (void *)philos);
-        if (temp)
-        {
-            printf("Error: Couldn't create threads\n");
-            free(philos->philos);
-            free(philos);
-            return NULL;
-        }
-        i++;
-    }
-    return philos;
-}
+//     philos->philos = malloc(philos->number_of_philosophers * sizeof(t_philo));
+//     if (!philos->philos)
+//     {
+//         free(philos);
+//         printf("Error: Couldn't allocate memory for philosophers\n");
+//         return NULL;
+//     }
+//     i = 0;
+//     while (i < philos->number_of_philosophers)
+//     {
+//         temp = pthread_create(philos->philos[i].t, NULL, live, (void *)philos);
+//         if (temp)
+//         {
+//             printf("Error: Couldn't create threads\n");
+//             free(philos->philos);
+//             free(philos);
+//             return NULL;
+//         }
+//         i++;
+//     }
+//     return philos;
+// }
 
-int main(int ac, char **av)
+/* int main(int ac, char **av)
 {
 
     t_philos *philos;
@@ -111,4 +111,9 @@ int main(int ac, char **av)
     //        philos->time_to_die, philos->time_to_eat, philos->time_to_sleep, philos->number_of_times_each_philosopher_must_eat);
 
     free(philos);
+} */
+
+int main()
+{
+    run_threads();
 }
