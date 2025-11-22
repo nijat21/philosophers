@@ -1,55 +1,53 @@
 #include "philo.h"
 
-typedef struct
-{
-    int counter;
-    pthread_mutex_t lock;
-} SharedData;
-
-void *increment(void *arg)
-{
-    SharedData *data = (SharedData *)arg;
-    pthread_mutex_lock(&data->lock);
-    data->counter++;
-    pthread_mutex_unlock(&data->lock);
-    return NULL;
-}
-
-void run_threads()
-{
-    pthread_t t1;
-    pthread_t t2;
-    SharedData data;
-
-    data.counter = 0;
-    pthread_mutex_init(&data.lock, NULL);
-
-    pthread_create(&t1, NULL, increment, (void *)&data);
-    pthread_create(&t2, NULL, increment, (void *)&data);
-
-    pthread_join(t1, NULL);
-    pthread_join(t2, NULL);
-
-    printf("Counter = %d\n", data.counter);
-
-    pthread_mutex_destroy(&data.lock);
-}
-
 /* ToDOs:
     1. Creat a thread for each philosopher with their numbers
     2. Functions to do movements: pick up left fork, pick up right fork, eat, sleep, think
 */
 
-void *routine(void *arg)
+long get_ms(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+/*
+    1.Fork locks should be shared among phils so that it works
+    2.Every fork is a mutex
+    3.Which fork can be used by current phil and is locked in that duration
+*/
+
+void *live(void *philo)
 {
     /*
+        timestamp_in_ms X has taken a fork
         timestamp_in_ms X has taken a fork
         timestamp_in_ms X is eating
         timestamp_in_ms X is sleeping
         timestamp_in_ms X is thinking
         timestamp_in_ms X died
     */
-    (void)arg;
+    t_philos *ph;
+    long start_time;
+    long last_meal;
+
+    start_time = get_ms();
+    // pthread_mutex_lock();
+    printf("%d has taken a fork\n");
+    // pthread_mutex_lock();
+    printf("%d has taken a fork\n");
+    printf("%d is eating\n");
+    usleep(ph->time_to_eat * 1000);
+    if (get_ms() - start_time == ph->time_to_eat)
+    {
+        printf("%d is sleeping\n");
+        // pthread_mutex_unlock();
+        // pthread_mutex_unlock();
+    }
+    usleep(ph->time_to_sleep * 1000);
+    if (get_ms() - start_time - ph->time_to_eat == ph->time_to_sleep)
+        printf("%d is thinking\n");
     return NULL;
 }
 
@@ -66,10 +64,9 @@ t_philos *create_phils(t_philos *philos)
         return NULL;
     }
     i = 0;
-    // while (i < philos->number_of_philosophers)
-    while (i < 1)
+    while (i < philos->number_of_philosophers)
     {
-        temp = pthread_create(philos->philos[i].t, NULL, routine, (void *)philos->philos[i]);
+        temp = pthread_create(philos->philos[i].t, NULL, live, (void *)philos);
         if (temp)
         {
             printf("Error: Couldn't create threads\n");
@@ -77,12 +74,6 @@ t_philos *create_phils(t_philos *philos)
             free(philos);
             return NULL;
         }
-        philos->philos[i].t = temp;
-        philos->philos[i].n = i + 1;
-        philos->philos[i].time_to_die = philos->time_to_die;
-        philos->philos[i].time_to_eat = philos->time_to_eat;
-        philos->philos[i].time_to_sleep = philos->time_to_sleep;
-        philos->philos[i].number_of_times_eaten = 0;
         i++;
     }
     return philos;

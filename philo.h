@@ -10,12 +10,10 @@
 
 typedef struct s_philo
 {
-    pthread_t t;
+    pthread_t *t;
     int n;
-    int time_to_die;
-    int time_to_eat;
-    int time_to_sleep;
     int number_of_times_eaten;
+    pthread_mutex_t **forks;
 } t_philo;
 
 typedef struct s_philos
