@@ -2,53 +2,80 @@
 
 typedef struct
 {
-    char *name;
+    int n;
+    int total;
     pthread_t thread;
-    pthread_mutex_t ***forks;
+    pthread_mutex_t *forks;
 } t_p;
 
 void *live(void *arg)
 {
     t_p *philo = (t_p *)arg;
-    printf("%s picked up fork\n", philo->name);
-    pthread_mutex_lock(*philo->forks[0]);
-    printf("%s picked up fork\n", philo->name);
-    pthread_mutex_lock(*philo->forks[1]);
-    printf("%s is eating\n", philo->name);
-    usleep(200000);
-    printf("%s is sleeping\n", philo->name);
-    pthread_mutex_unlock(*philo->forks[0]);
-    pthread_mutex_unlock(*philo->forks[1]);
+    int left_fork;
+    int right_fork;
+
+    right_fork = philo->n;
+    left_fork = (philo->n + 1) % philo->total;
+
+    if (philo->n % 2 == 0)
+    {
+        pthread_mutex_lock(&philo->forks[left_fork]);
+        printf("P%d picked up left fork\n", philo->n + 1);
+        pthread_mutex_lock(&philo->forks[right_fork]);
+        printf("P%d picked up right fork\n", philo->n + 1);
+    }
+    else
+    {
+        pthread_mutex_lock(&philo->forks[right_fork]);
+        printf("P%d picked up right fork\n", philo->n + 1);
+        pthread_mutex_lock(&philo->forks[left_fork]);
+        printf("P%d picked up left fork\n", philo->n + 1);
+    }
+
+    printf("P%d is eating\n", philo->n + 1);
+    usleep(2000000);
+
+    printf("P%d is sleeping\n", philo->n + 1);
+
+    pthread_mutex_unlock(&philo->forks[left_fork]);
+    pthread_mutex_unlock(&philo->forks[right_fork]);
     return NULL;
 }
 
 void run_threads()
 {
-    t_p P1;
-    t_p P2;
+    t_p *philos = malloc(sizeof(t_p) * 5);
+    pthread_mutex_t forks[5];
+    int total = 5;
 
-    pthread_mutex_t f1;
-    pthread_mutex_t f2;
-    pthread_mutex_t **forks = NULL;
+    int i = 0;
+    while (i < total)
+    {
+        pthread_mutex_init(&forks[i], NULL);
+        i++;
+    }
 
-    pthread_mutex_init(&f1, NULL);
-    pthread_mutex_init(&f2, NULL);
+    i = 0;
+    while (i < total)
+    {
+        philos[i].forks = forks;
+        philos[i].n = i;
+        philos[i].total = total;
+        pthread_create(&philos[i].thread, NULL, live, (void *)&philos[i]);
+        i++;
+    }
 
-    forks[0] = &f1;
-    forks[1] = &f2;
-    P1.forks = &forks;
-    P2.forks = &forks;
-    P1.name = "P1";
-    P1.name = "P2";
+    i = 0;
+    while (i < total)
+    {
+        pthread_join(philos[i].thread, NULL);
+        i++;
+    }
 
-    pthread_create(&P1.thread, NULL, live, (void *)&P1);
-    pthread_create(&P2.thread, NULL, live, (void *)&P2);
-
-    pthread_join(P1.thread, NULL);
-    pthread_join(P2.thread, NULL);
-
-    pthread_mutex_destroy(&f1);
-    pthread_mutex_destroy(&f2);
-
-    free(forks);
+    i = 0;
+    while (i < total)
+    {
+        pthread_mutex_destroy(&forks[i]);
+        i++;
+    }
 }
