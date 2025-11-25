@@ -34,7 +34,7 @@ int custom_atoi(char *str, int *err)
     return (int)res;
 }
 
-int check_and_store(int ac, char *av[], t_philos *args)
+int check_and_store(int ac, char *av[], t_props *args)
 {
     int i;
     int err;
