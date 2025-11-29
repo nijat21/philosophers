@@ -27,8 +27,10 @@ typedef struct s_philo
     int id;
     pthread_t thread;
     pthread_mutex_t *forks;
+    int left_fork_picked;
+    int right_fork_picked;
     int number_of_times_eaten;
-    long last_ate_in_ms;
+    long born_or_last_ate_in_ms;
     long start;
     t_props *props;
 } t_philo;
