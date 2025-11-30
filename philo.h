@@ -27,8 +27,8 @@ typedef struct s_philo
     int id;
     pthread_t thread;
     pthread_mutex_t *forks;
-    int left_fork_picked;
-    int right_fork_picked;
+    int forks_picked;
+    int ate_this_round;
     int number_of_times_eaten;
     long born_or_last_ate_in_ms;
     long start;

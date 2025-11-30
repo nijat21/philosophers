@@ -38,7 +38,7 @@ int main(int ac, char **av)
         return 0;
     }
     int res = check_and_store(ac, av, props);
-    printf("wrong_philos: %d\n", res);
+    // printf("wrong_philos: %d\n", res);
     if (res)
         return 0;
     // printf("number_of_philosophers:%d\n time_to_die:%d\n time_to_eat%d\n time_to_sleep:%d\n"

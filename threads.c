@@ -9,45 +9,49 @@ long get_ms(void)
 
 void pickup_forks(t_philo *philo, int left_fork, int right_fork)
 {
-    if (philo->id % 2 == 0)
+    if (philo->props->number_of_philosophers == 1)
+    {
+        pthread_mutex_lock(&philo->forks[right_fork]);
+        printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
+        usleep(philo->props->time_to_die * 1000);
+    }
+    else if (philo->id % 2 == 0)
     {
         pthread_mutex_lock(&philo->forks[left_fork]);
         printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
-        philo->left_fork_picked = 1;
         pthread_mutex_lock(&philo->forks[right_fork]);
         printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
-        philo->right_fork_picked = 1;
+        philo->forks_picked = 1;
     }
     else
     {
         pthread_mutex_lock(&philo->forks[right_fork]);
         printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
-        philo->right_fork_picked = 1;
-        if (left_fork < philo->props->number_of_philosophers)
-        {
-            pthread_mutex_lock(&philo->forks[left_fork]);
-            printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
-            philo->left_fork_picked = 1;
-        }
-        else
-            return;
+        pthread_mutex_lock(&philo->forks[left_fork]);
+        printf("%ld %d has taken fork\n", get_ms() - philo->start, philo->id + 1);
+        philo->forks_picked = 1;
     }
 }
-
+/*
+    1. Constant check for time to die when sleeping
+    2. One philo is eating second that can't access fork but waiting will die if wait time == time to die
+*/
 void eat(t_philo *philo, int left_fork, int right_fork)
 {
-    if (philo->left_fork_picked && philo->right_fork_picked)
+    pickup_forks(philo, left_fork, right_fork);
+    if (philo->props->number_of_philosophers == 1)
+        pthread_mutex_unlock(&philo->forks[right_fork]);
+    else
     {
         printf("%ld %d is eating\n", get_ms() - philo->start, philo->id + 1);
         usleep(philo->props->time_to_eat * 1000);
+        philo->ate_this_round = 1;
         philo->number_of_times_eaten += 1;
         philo->born_or_last_ate_in_ms = get_ms();
-
-        philo->right_fork_picked = 0;
+        philo->forks_picked = 0;
         pthread_mutex_unlock(&philo->forks[right_fork]);
+        pthread_mutex_unlock(&philo->forks[left_fork]);
     }
-    philo->left_fork_picked = 0;
-    pthread_mutex_unlock(&philo->forks[left_fork]);
 }
 
 void *live(void *arg)
@@ -55,19 +59,16 @@ void *live(void *arg)
     t_philo *philo = (t_philo *)arg;
     int left_fork;
     int right_fork;
-    int i;
 
     right_fork = philo->id;
     left_fork = (philo->id + 1) % philo->props->number_of_philosophers;
     philo->start = get_ms();
     philo->born_or_last_ate_in_ms = get_ms();
 
-    i = 0;
-    while (i < philo->props->number_of_times_each_philosopher_must_eat)
+    while (!philo->props->some_philo_died && !philo->props->simulation_end)
     {
-        // another condition checking if there're enough forks or time to eat
-        // phiolo should at least pickup the fork even if ther's one fork
-        // philo should pick up forks even if there's not time to eat
+        philo->ate_this_round = 0;
+        // If all ate enough
         if (philo->number_of_times_eaten == philo->props->number_of_times_each_philosopher_must_eat)
         {
             pthread_mutex_lock(&philo->props->state_update_lock);
@@ -77,33 +78,34 @@ void *live(void *arg)
             pthread_mutex_unlock(&philo->props->state_update_lock);
             return NULL;
         }
-        if (get_ms() - philo->born_or_last_ate_in_ms >= philo->props->time_to_die)
-        {
-            printf("now - born or last ate: %ld time to die: %d\n", get_ms() - philo->born_or_last_ate_in_ms, philo->props->time_to_die);
-            pthread_mutex_lock(&philo->props->death_lock);
-            printf("%ld %d died\n", get_ms() - philo->start, philo->id + 1);
-            philo->props->some_philo_died = 1;
-            pthread_mutex_unlock(&philo->props->death_lock);
-            return NULL;
-        }
-        pickup_forks(philo, left_fork, right_fork);
+
+        // Eat
         eat(philo, left_fork, right_fork);
+
         if (get_ms() - philo->born_or_last_ate_in_ms >= philo->props->time_to_die)
         {
-            printf("now - born or last ate: %ld time to die: %d\n", get_ms() - philo->born_or_last_ate_in_ms, philo->props->time_to_die);
+            printf("difference %ld\n", get_ms() - philo->born_or_last_ate_in_ms);
             pthread_mutex_lock(&philo->props->death_lock);
             printf("%ld %d died\n", get_ms() - philo->start, philo->id + 1);
             philo->props->some_philo_died = 1;
             pthread_mutex_unlock(&philo->props->death_lock);
             return NULL;
         }
+        // printf("died %d complete %d\n", philo->props->some_philo_died, philo->props->simulation_end);
         if (philo->props->some_philo_died)
             return NULL;
-        printf("%ld %d is sleeping\n", get_ms() - philo->start, philo->id + 1);
-        usleep(philo->props->time_to_sleep * 1000);
-        printf("%ld %d is thinking\n", get_ms() - philo->start, philo->id + 1);
-
-        i++;
+        if (philo->ate_this_round)
+        {
+            printf("%ld %d is sleeping\n", get_ms() - philo->start, philo->id + 1);
+            usleep(philo->props->time_to_sleep * 1000);
+            printf("%ld %d is thinking\n", get_ms() - philo->start, philo->id + 1);
+        }
+        else
+        {
+            usleep(philo->props->time_to_die * 1000);
+            philo->props->some_philo_died = 1;
+            return NULL;
+        }
     }
     return NULL;
 }
@@ -135,18 +137,12 @@ void run_threads(t_props *props)
     while (i < total)
     {
         philos[i].forks = forks;
+        philos[i].forks_picked = 0;
         philos[i].id = i;
         philos[i].props = props;
         philos[i].number_of_times_eaten = 0;
-        philos[i].left_fork_picked = 0;
-        philos[i].right_fork_picked = 0;
         pthread_create(&philos[i].thread, NULL, live, (void *)&philos[i]);
         i++;
-        if (props->simulation_end || props->some_philo_died)
-        {
-            total = i;
-            break;
-        }
     }
 
     i = 0;
@@ -162,4 +158,5 @@ void run_threads(t_props *props)
         pthread_mutex_destroy(&forks[i]);
         i++;
     }
+    free(philos);
 }
