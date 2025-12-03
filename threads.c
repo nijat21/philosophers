@@ -18,58 +18,105 @@ void smart_sleep(long ms)
 
 void pickup_forks(t_philo *philo, int left_fork, int right_fork)
 {
-    if (philo->props->number_of_philosophers == 1)
+    if (left_fork == right_fork)
     {
-        pthread_mutex_lock(&philo->forks[right_fork]);
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_lock(&philo->forks[left_fork]);
+        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
+        smart_sleep(philo->props->time_to_die);
+        pthread_mutex_unlock(&philo->forks[left_fork]);
+        return;
     }
     else if (philo->id % 2 == 0)
     {
         pthread_mutex_lock(&philo->forks[left_fork]);
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died)
+        {
+            pthread_mutex_unlock(&philo->forks[left_fork]);
+            pthread_mutex_unlock(&philo->props->death_lock);
+            return;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
+        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
+
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died)
+        {
+            printf("here\n");
+            pthread_mutex_unlock(&philo->props->death_lock);
+            pthread_mutex_unlock(&philo->forks[left_fork]);
+            return;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
+
         pthread_mutex_lock(&philo->forks[right_fork]);
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died)
+        {
+            pthread_mutex_unlock(&philo->props->death_lock);
+            pthread_mutex_unlock(&philo->forks[left_fork]);
+            pthread_mutex_unlock(&philo->forks[right_fork]);
+            return;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
+        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
     }
     else
     {
         pthread_mutex_lock(&philo->forks[right_fork]);
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died)
+        {
+            pthread_mutex_unlock(&philo->props->death_lock);
+            pthread_mutex_unlock(&philo->forks[right_fork]);
+            return;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
+        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
         pthread_mutex_lock(&philo->forks[left_fork]);
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died)
+        {
+            pthread_mutex_unlock(&philo->props->death_lock);
+            pthread_mutex_unlock(&philo->forks[left_fork]);
+            pthread_mutex_unlock(&philo->forks[right_fork]);
+            return;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
+        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
     }
 }
-/*
-1. Constant check for time to die when sleeping
-2. One philo is eating second that can't access fork but waiting will die if wait time == time to die
-*/
+
 void eat(t_philo *philo, int left_fork, int right_fork)
 {
     pickup_forks(philo, left_fork, right_fork);
-    pthread_mutex_lock(&philo->props->state_lock);
-    if (philo->props->number_of_philosophers == 1)
+    pthread_mutex_lock(&philo->props->death_lock);
+    if (philo->props->some_philo_died)
     {
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_unlock(&philo->props->death_lock);
         pthread_mutex_unlock(&philo->forks[right_fork]);
-        smart_sleep(philo->props->time_to_die);
+        pthread_mutex_unlock(&philo->forks[left_fork]);
+        return;
     }
-    else
+    pthread_mutex_unlock(&philo->props->death_lock);
+    pthread_mutex_lock(&philo->props->state_lock);
+    philo->born_or_last_ate_in_ms = get_ms();
+    philo->number_of_times_eaten += 1;
+    philo->state = EATING;
+    pthread_mutex_unlock(&philo->props->state_lock);
+    pthread_mutex_lock(&philo->props->death_lock);
+    if (philo->props->some_philo_died)
     {
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d is eating\n", get_ms() - philo->props->start_time, philo->id + 1);
-        smart_sleep(philo->props->time_to_eat);
-        philo->number_of_times_eaten += 1;
-        philo->born_or_last_ate_in_ms = get_ms();
-        pthread_mutex_unlock(&philo->props->state_lock);
+        pthread_mutex_unlock(&philo->props->death_lock);
+        pthread_mutex_unlock(&philo->forks[right_fork]);
+        pthread_mutex_unlock(&philo->forks[left_fork]);
+        return;
+    }
+    pthread_mutex_unlock(&philo->props->death_lock);
+    printf(GREEN "[%ld]" RESET " %d is eating\n", get_ms() - philo->props->start_time, philo->id + 1);
+    smart_sleep(philo->props->time_to_eat);
+    if (left_fork != right_fork)
+    {
         pthread_mutex_unlock(&philo->forks[right_fork]);
         pthread_mutex_unlock(&philo->forks[left_fork]);
     }
@@ -81,22 +128,16 @@ void *live(void *arg)
     int left_fork;
     int right_fork;
 
-    pthread_mutex_lock(&philo->props->state_lock);
     right_fork = philo->id;
     left_fork = (philo->id + 1) % philo->props->number_of_philosophers;
+    pthread_mutex_lock(&philo->props->state_lock);
     philo->born_or_last_ate_in_ms = philo->props->start_time;
     pthread_mutex_unlock(&philo->props->state_lock);
 
     while (1)
     {
-        // pthread_mutex_lock(&philo->props->death_lock);
-        // if (philo->props->some_philo_died || philo->props->simulation_end)
-        // {
-        //     pthread_mutex_unlock(&philo->props->death_lock);
-        //     return NULL;
-        // }
-        // pthread_mutex_unlock(&philo->props->death_lock);
-
+        // EAT
+        eat(philo, left_fork, right_fork);
         pthread_mutex_lock(&philo->props->state_lock);
         if (philo->number_of_times_eaten == philo->props->number_of_times_each_philosopher_must_eat)
         {
@@ -107,8 +148,6 @@ void *live(void *arg)
             return NULL;
         }
         pthread_mutex_unlock(&philo->props->state_lock);
-        // EAT
-        eat(philo, left_fork, right_fork);
 
         pthread_mutex_lock(&philo->props->death_lock);
         if (philo->props->some_philo_died || philo->props->simulation_end)
@@ -117,18 +156,23 @@ void *live(void *arg)
             return NULL;
         }
         pthread_mutex_unlock(&philo->props->death_lock);
-
         pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d is sleeping\n", get_ms() - philo->props->start_time, philo->id + 1);
+        philo->state = SLEEPING;
         pthread_mutex_unlock(&philo->props->state_lock);
+        printf(GREEN "[%ld]" RESET " %d is sleeping\n", get_ms() - philo->props->start_time, philo->id + 1);
+        smart_sleep(philo->props->time_to_sleep);
 
+        pthread_mutex_lock(&philo->props->death_lock);
+        if (philo->props->some_philo_died || philo->props->simulation_end)
+        {
+            pthread_mutex_unlock(&philo->props->death_lock);
+            return NULL;
+        }
+        pthread_mutex_unlock(&philo->props->death_lock);
         pthread_mutex_lock(&philo->props->state_lock);
-        usleep(philo->props->time_to_sleep * 1000);
+        philo->state = THINKING;
         pthread_mutex_unlock(&philo->props->state_lock);
-
-        pthread_mutex_lock(&philo->props->state_lock);
-        printf("%ld %d is thinking\n", get_ms() - philo->props->start_time, philo->id + 1);
-        pthread_mutex_unlock(&philo->props->state_lock);
+        printf(GREEN "[%ld]" RESET " %d is thinking\n", get_ms() - philo->props->start_time, philo->id + 1);
     }
     return NULL;
 }
@@ -138,15 +182,14 @@ void *track(void *arg)
     int i;
     t_monitor *mon;
     long last_ate;
+    t_state current_state;
 
     mon = (t_monitor *)arg;
     while (1)
     {
         pthread_mutex_lock(&mon->props->death_lock);
-        if (mon->props->some_philo_died || mon->props->simulation_end)
+        if (mon->props->simulation_end)
         {
-            if (mon->props->some_philo_died)
-                printf("%ld %d died\n", get_ms() - mon->props->start_time, mon->philos[i].id + 1);
             pthread_mutex_unlock(&mon->props->death_lock);
             return NULL;
         }
@@ -157,18 +200,19 @@ void *track(void *arg)
         {
             pthread_mutex_lock(&mon->props->state_lock);
             last_ate = mon->philos[i].born_or_last_ate_in_ms;
-            if (get_ms() - last_ate >= mon->props->time_to_die)
+            current_state = mon->philos[i].state;
+            pthread_mutex_unlock(&mon->props->state_lock);
+            if (get_ms() - last_ate >= mon->props->time_to_die && current_state != EATING)
             {
-                pthread_mutex_unlock(&mon->props->state_lock);
+                printf(RED "[%ld] %d died\n" RESET, get_ms() - mon->props->start_time, mon->philos[i].id + 1);
                 pthread_mutex_lock(&mon->props->death_lock);
-                printf("%ld %d died\n", get_ms() - mon->props->start_time, mon->philos[i].id + 1);
                 mon->props->some_philo_died = 1;
                 pthread_mutex_unlock(&mon->props->death_lock);
                 return NULL;
             }
             i++;
         }
-        usleep(100);
+        usleep(1000);
     }
     return NULL;
 }
@@ -205,7 +249,9 @@ void run_threads(t_props *props)
         philos[i].id = i;
         philos[i].props = props;
         philos[i].number_of_times_eaten = 0;
+        philos[i].state = THINKING;
         pthread_create(&philos[i].thread, NULL, live, (void *)&philos[i]);
+        usleep(100);
         i++;
     }
     monitor = malloc(sizeof(t_monitor));
@@ -228,13 +274,6 @@ void run_threads(t_props *props)
         i++;
     }
     pthread_detach(monitor->tracker);
-
-    i = 0;
-    while (i < total)
-    {
-        pthread_detach(philos[i].thread);
-        i++;
-    }
 
     // Pthread_detach
     free(philos);

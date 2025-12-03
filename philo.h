@@ -8,6 +8,10 @@
 #include <sys/time.h>
 #include <pthread.h>
 
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define RESET "\033[0m"
+
 typedef struct s_props
 {
     int number_of_philosophers;
@@ -23,6 +27,13 @@ typedef struct s_props
     long start_time;
 } t_props;
 
+typedef enum e_state
+{
+    EATING,
+    SLEEPING,
+    THINKING,
+} t_state;
+
 typedef struct s_philo
 {
     int id;
@@ -31,6 +42,7 @@ typedef struct s_philo
     int number_of_times_eaten;
     long born_or_last_ate_in_ms;
     t_props *props;
+    t_state state;
 } t_philo;
 
 typedef struct s_monitor

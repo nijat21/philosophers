@@ -28,7 +28,7 @@ int main(int ac, char **av)
     }
     if (ac == 6 && atoi(av[5]) == 0)
     {
-        printf("All philosophers have eaten enough!\n");
+        printf(GREEN "All philosophers have eaten enough!\n" RESET);
         return 0;
     }
     props = malloc(sizeof(t_props));
