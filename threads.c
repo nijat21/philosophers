@@ -13,7 +13,7 @@ void smart_sleep(long ms)
 
     start = get_ms();
     while (get_ms() - start < ms)
-        usleep(100);
+        usleep(1000);
 }
 
 void pickup_forks(t_philo *philo, int left_fork, int right_fork)
@@ -212,7 +212,7 @@ void *track(void *arg)
             }
             i++;
         }
-        usleep(1000);
+        usleep(100);
     }
     return NULL;
 }
