@@ -40,7 +40,10 @@ int main(int ac, char **av)
     int res = check_and_store(ac, av, props);
     // printf("wrong_philos: %d\n", res);
     if (res)
+    {
+        free(props);
         return 0;
+    }
     // printf("number_of_philosophers:%d\n time_to_die:%d\n time_to_eat%d\n time_to_sleep:%d\n"
     //        "[number_of_times_each_philosopher_must_eat](optional):%d\n",
     //        philos->number_of_philosophers,

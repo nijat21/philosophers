@@ -2,16 +2,10 @@
 
 int custom_atoi(char *str, int *err)
 {
-    int sign;
     double res;
 
-    sign = 1;
-    if (*str == '-' || *str == '+')
-    {
-        if (*str == '-')
-            sign = -1;
+    if (*str == '+')
         str++;
-    }
     res = 0;
     while (*str)
     {
@@ -24,7 +18,6 @@ int custom_atoi(char *str, int *err)
         res = res * 10 + (*str - '0');
         str++;
     }
-    res *= sign;
     if (res > 2147483647 || res < -2147483648)
     {
         fprintf(stderr, "Error: Integer overflow\n");
