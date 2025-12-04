@@ -57,4 +57,7 @@ int check_and_store(int ac, char *av[], t_props *args);
 
 void run_threads(t_props *props);
 
+int max(int a, int b);
+int min(int a, int b);
+
 #endif

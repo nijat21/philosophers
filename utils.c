@@ -56,7 +56,22 @@ int check_and_store(int ac, char *av[], t_props *args)
     args->time_to_die = custom_atoi(av[2], &err);
     args->time_to_eat = custom_atoi(av[3], &err);
     args->time_to_sleep = custom_atoi(av[4], &err);
+    args->number_of_times_each_philosopher_must_eat = -1;
     if (ac == 6)
         args->number_of_times_each_philosopher_must_eat = custom_atoi(av[5], &err);
     return 0;
+}
+
+int min(int a, int b)
+{
+    if (a < b)
+        return a;
+    return b;
+}
+
+int max(int a, int b)
+{
+    if (a > b)
+        return a;
+    return b;
 }
