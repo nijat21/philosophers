@@ -7,13 +7,37 @@ long get_ms(void)
     return (long)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
-void smart_sleep(long ms)
+void smart_sleep(long ms, t_philo *philo)
 {
     long start;
+    int philo_died;
 
     start = get_ms();
     while (get_ms() - start < ms)
-        usleep(1000);
+    {
+        pthread_mutex_lock(&philo->props->death_lock);
+        philo_died = philo->props->some_philo_died;
+        pthread_mutex_unlock(&philo->props->death_lock);
+        if (philo_died)
+            break;
+        usleep(100);
+    }
+}
+
+void safe_print(t_philo *philo, char *msg)
+{
+    pthread_mutex_lock(&philo->props->print_lock);
+    pthread_mutex_lock(&philo->props->death_lock);
+    if (!philo->props->some_philo_died)
+    {
+        // usleep(150);
+        if (strcmp(msg, "died") == 0)
+            printf(RED "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+        else
+            printf(GREEN "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+    }
+    pthread_mutex_unlock(&philo->props->death_lock);
+    pthread_mutex_unlock(&philo->props->print_lock);
 }
 
 int pickup_forks(t_philo *philo, int left_fork, int right_fork)
@@ -21,8 +45,8 @@ int pickup_forks(t_philo *philo, int left_fork, int right_fork)
     if (left_fork == right_fork)
     {
         pthread_mutex_lock(&philo->forks[left_fork]);
-        printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
-        smart_sleep(philo->props->time_to_die);
+        safe_print(philo, "has taken fork");
+        smart_sleep(philo->props->time_to_die, philo);
         pthread_mutex_unlock(&philo->forks[left_fork]);
         return 1;
     }
@@ -35,7 +59,7 @@ int pickup_forks(t_philo *philo, int left_fork, int right_fork)
         return 0;
     }
     pthread_mutex_unlock(&philo->props->death_lock);
-    printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
+    safe_print(philo, "has taken fork");
     pthread_mutex_lock(&philo->forks[left_fork]);
     pthread_mutex_lock(&philo->props->death_lock);
     if (philo->props->some_philo_died)
@@ -46,7 +70,7 @@ int pickup_forks(t_philo *philo, int left_fork, int right_fork)
         return 0;
     }
     pthread_mutex_unlock(&philo->props->death_lock);
-    printf(GREEN "[%ld]" RESET " %d has taken fork\n", get_ms() - philo->props->start_time, philo->id + 1);
+    safe_print(philo, "has taken fork");
     return 2;
 }
 
@@ -75,8 +99,8 @@ void eat(t_philo *philo, int left_fork, int right_fork)
     philo->number_of_times_eaten += 1;
     philo->state = EATING;
     pthread_mutex_unlock(&philo->props->state_lock);
-    printf(GREEN "[%ld]" RESET " %d is eating\n", get_ms() - philo->props->start_time, philo->id + 1);
-    smart_sleep(philo->props->time_to_eat);
+    safe_print(philo, "is eating");
+    smart_sleep(philo->props->time_to_eat, philo);
     pthread_mutex_unlock(&philo->forks[right_fork]);
     pthread_mutex_unlock(&philo->forks[left_fork]);
 }
@@ -90,8 +114,17 @@ void *live(void *arg)
 
     // right_fork = min(philo->id, (philo->id + 1) % philo->props->number_of_philosophers);
     // left_fork = max(philo->id, (philo->id + 1) % philo->props->number_of_philosophers);
-    right_fork = philo->id;
-    left_fork = (philo->id + 1) % philo->props->number_of_philosophers;
+    if (philo->id % 2 == 0)
+    {
+        right_fork = (philo->id + 1) % philo->props->number_of_philosophers;
+        left_fork = philo->id;
+    }
+    else
+    {
+        right_fork = philo->id;
+        left_fork = (philo->id + 1) % philo->props->number_of_philosophers;
+    }
+
     while (1)
     {
         eat(philo, left_fork, right_fork);
@@ -118,10 +151,18 @@ void *live(void *arg)
             return NULL;
 
         pthread_mutex_lock(&philo->props->state_lock);
-        philo->state = SLEEPING;
-        pthread_mutex_unlock(&philo->props->state_lock);
-        printf(GREEN "[%ld]" RESET " %d is sleeping\n", get_ms() - philo->props->start_time, philo->id + 1);
-        smart_sleep(philo->props->time_to_sleep);
+        if (philo->state == EATING)
+        {
+            philo->state = SLEEPING;
+            safe_print(philo, "is sleeping");
+            pthread_mutex_unlock(&philo->props->state_lock);
+            smart_sleep(philo->props->time_to_sleep, philo);
+        }
+        else
+        {
+            pthread_mutex_unlock(&philo->props->state_lock);
+            return NULL;
+        }
 
         pthread_mutex_lock(&philo->props->death_lock);
         died_or_ended = philo->props->some_philo_died || philo->props->simulation_end;
@@ -132,7 +173,7 @@ void *live(void *arg)
         pthread_mutex_lock(&philo->props->state_lock);
         philo->state = THINKING;
         pthread_mutex_unlock(&philo->props->state_lock);
-        printf(GREEN "[%ld]" RESET " %d is thinking\n", get_ms() - philo->props->start_time, philo->id + 1);
+        safe_print(philo, "is thinking");
     }
     return NULL;
 }
@@ -163,7 +204,7 @@ void *track(void *arg)
             pthread_mutex_unlock(&mon->props->state_lock);
             if (get_ms() - last_ate >= mon->props->time_to_die && current_state != EATING)
             {
-                printf("[%ld] %d died\n", get_ms() - mon->props->start_time, mon->philos[i].id + 1);
+                safe_print(&mon->philos[i], "died");
                 pthread_mutex_lock(&mon->props->death_lock);
                 mon->props->some_philo_died = 1;
                 pthread_mutex_unlock(&mon->props->death_lock);
@@ -171,7 +212,7 @@ void *track(void *arg)
             }
             i++;
         }
-        usleep(100);
+        // usleep(100);
     }
     return NULL;
 }
@@ -200,6 +241,7 @@ void run_threads(t_props *props)
     }
     pthread_mutex_init(&props->death_lock, NULL);
     pthread_mutex_init(&props->state_lock, NULL);
+    pthread_mutex_init(&props->print_lock, NULL);
 
     i = 0;
     while (i < total)
@@ -235,6 +277,7 @@ void run_threads(t_props *props)
     }
     pthread_mutex_destroy(&props->death_lock);
     pthread_mutex_destroy(&props->state_lock);
+    pthread_mutex_destroy(&props->print_lock);
 
     // Pthread_detach
     free(forks);

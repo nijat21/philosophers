@@ -21,6 +21,7 @@ typedef struct s_props
     int number_of_times_each_philosopher_must_eat;
     pthread_mutex_t death_lock;
     pthread_mutex_t state_lock;
+    pthread_mutex_t print_lock;
     int some_philo_died;
     int finished_philos;
     int simulation_end;
