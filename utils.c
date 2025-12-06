@@ -97,7 +97,7 @@ void safe_print(t_philo *philo, char *msg)
     if (strcmp(msg, "died") == 0)
     {
         pthread_mutex_lock(&philo->props->print_lock);
-        printf(RED "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+        printf(RED "%ld" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
         pthread_mutex_unlock(&philo->props->print_lock);
         return;
     }
@@ -107,7 +107,7 @@ void safe_print(t_philo *philo, char *msg)
     if (!philo_died)
     {
         pthread_mutex_lock(&philo->props->print_lock);
-        printf(GREEN "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+        printf(GREEN "%ld" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
         pthread_mutex_unlock(&philo->props->print_lock);
     }
 }

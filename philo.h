@@ -27,23 +27,16 @@ typedef struct s_props
     pthread_mutex_t print_lock;
 } t_props;
 
-typedef enum e_state
-{
-    EATING,
-    SLEEPING,
-    THINKING,
-} t_state;
-
 typedef struct s_philo
 {
     int id;
+    int number_of_times_eaten;
+    int is_eating;
+    long born_or_last_ate_in_ms;
+    t_props *props;
     pthread_t thread;
     pthread_mutex_t *forks;
     pthread_mutex_t state_lock;
-    int number_of_times_eaten;
-    long born_or_last_ate_in_ms;
-    t_props *props;
-    t_state state;
 } t_philo;
 
 typedef struct s_monitor
@@ -66,7 +59,6 @@ void smart_sleep(long ms, t_philo *philo);
 void safe_print(t_philo *philo, char *msg);
 int sim_step_or_end(t_philo *philo);
 void philo_sleep(t_philo *philo);
-void philo_think(t_philo *philo);
 void assign_forks(t_philo *philo, int *first_fork, int *second_fork);
 
 #endif

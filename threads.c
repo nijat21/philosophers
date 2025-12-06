@@ -34,25 +34,22 @@ int eat(t_philo *philo)
     int first_fork;
     int second_fork;
 
-    assign_forks(philo, &first_fork, &second_fork);
+    assign_forks(philo, &first_fork, &second_fork); // Asign them in the beginning 
     // if (philo->id % 2 != 0)
     //     usleep(100);
     fork_state = pickup_forks(philo, second_fork, first_fork);
     if (fork_state == 0 || fork_state == 1)
         return 0;
-    // if (died_or_ended(philo->props))
-    // {
-    //     pthread_mutex_unlock(&philo->forks[first_fork]);
-    //     pthread_mutex_unlock(&philo->forks[second_fork]);
-    //     return 0;
-    // }
+
     pthread_mutex_lock(&philo->state_lock);
-    philo->state = EATING;
+    philo->is_eating=1;
     philo->born_or_last_ate_in_ms = get_ms();
     philo->number_of_times_eaten += 1;
     pthread_mutex_unlock(&philo->state_lock);
+    
     safe_print(philo, "is eating");
     smart_sleep(philo->props->time_to_eat, philo);
+    
     pthread_mutex_unlock(&philo->forks[first_fork]);
     pthread_mutex_unlock(&philo->forks[second_fork]);
     return 1;
@@ -76,9 +73,9 @@ void *live(void *arg)
         if (died_or_ended(philo->props))
             return NULL;
         philo_sleep(philo);
-        if (died_or_ended(philo->props))
-            return NULL;
-        philo_think(philo);
+        safe_print(philo, "is thinking");
+        if (philo->props->number_of_philosophers % 2 != 0)
+            usleep(300);
     }
     return NULL;
 }
@@ -87,14 +84,14 @@ int died(t_philo *philo)
 {
     long last_ate;
     long now;
-    t_state curr_state;
+    int is_eating;
 
     now = get_ms();
     pthread_mutex_lock(&philo->state_lock);
     last_ate = philo->born_or_last_ate_in_ms;
-    curr_state = philo->state;
+    is_eating = philo->is_eating;
     pthread_mutex_unlock(&philo->state_lock);
-    if (now - last_ate >= philo->props->time_to_die && curr_state != EATING)
+    if (now - last_ate >= philo->props->time_to_die && !is_eating )
     {
         pthread_mutex_lock(&philo->props->death_lock);
         philo->props->some_philo_died = 1;
@@ -172,10 +169,10 @@ void run_threads(t_props *props)
         philos[i].id = i;
         philos[i].props = props;
         philos[i].number_of_times_eaten = 0;
-        philos[i].state = THINKING;
+        philos[i].is_eating = 0;
         philos[i].born_or_last_ate_in_ms = props->start_time;
         pthread_create(&philos[i].thread, NULL, live, (void *)&philos[i]);
-        usleep(1);
+        // usleep(1);
         i++;
     }
     monitor = malloc(sizeof(t_monitor));
