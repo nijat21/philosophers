@@ -62,16 +62,52 @@ int check_and_store(int ac, char *av[], t_props *args)
     return 0;
 }
 
-int min(int a, int b)
+int died_or_ended(t_props *props)
 {
-    if (a < b)
-        return a;
-    return b;
+    int died_end;
+
+    died_end = 0;
+    pthread_mutex_lock(&props->death_lock);
+    died_end = props->some_philo_died || props->simulation_end;
+    pthread_mutex_unlock(&props->death_lock);
+    return died_end;
 }
 
-int max(int a, int b)
+void smart_sleep(long ms, t_philo *philo)
 {
-    if (a > b)
-        return a;
-    return b;
+    long start;
+    int philo_died;
+
+    start = get_ms();
+    while (get_ms() - start < ms)
+    {
+        pthread_mutex_lock(&philo->props->death_lock);
+        philo_died = philo->props->some_philo_died;
+        pthread_mutex_unlock(&philo->props->death_lock);
+        if (philo_died)
+            break;
+        usleep(1000);
+    }
+}
+
+void safe_print(t_philo *philo, char *msg)
+{
+    int philo_died;
+
+    if (strcmp(msg, "died") == 0)
+    {
+        pthread_mutex_lock(&philo->props->print_lock);
+        printf(RED "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+        pthread_mutex_unlock(&philo->props->print_lock);
+        return;
+    }
+    pthread_mutex_lock(&philo->props->death_lock);
+    philo_died = philo->props->some_philo_died;
+    pthread_mutex_unlock(&philo->props->death_lock);
+    if (!philo_died)
+    {
+        pthread_mutex_lock(&philo->props->print_lock);
+        printf(GREEN "[%ld]" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
+        pthread_mutex_unlock(&philo->props->print_lock);
+    }
 }
