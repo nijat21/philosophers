@@ -35,19 +35,21 @@ int eat(t_philo *philo)
     int second_fork;
 
     assign_forks(philo, &first_fork, &second_fork);
+    // if (philo->id % 2 != 0)
+    //     usleep(100);
     fork_state = pickup_forks(philo, second_fork, first_fork);
     if (fork_state == 0 || fork_state == 1)
         return 0;
-    if (died_or_ended(philo->props))
-    {
-        pthread_mutex_unlock(&philo->forks[first_fork]);
-        pthread_mutex_unlock(&philo->forks[second_fork]);
-        return 0;
-    }
+    // if (died_or_ended(philo->props))
+    // {
+    //     pthread_mutex_unlock(&philo->forks[first_fork]);
+    //     pthread_mutex_unlock(&philo->forks[second_fork]);
+    //     return 0;
+    // }
     pthread_mutex_lock(&philo->state_lock);
+    philo->state = EATING;
     philo->born_or_last_ate_in_ms = get_ms();
     philo->number_of_times_eaten += 1;
-    philo->state = EATING;
     pthread_mutex_unlock(&philo->state_lock);
     safe_print(philo, "is eating");
     smart_sleep(philo->props->time_to_eat, philo);
@@ -61,12 +63,6 @@ void *live(void *arg)
     t_philo *philo;
 
     philo = (t_philo *)arg;
-
-    // initialize last_ate for precise tracking
-    pthread_mutex_lock(&philo->state_lock);
-    philo->born_or_last_ate_in_ms = get_ms();
-    pthread_mutex_unlock(&philo->state_lock);
-
     while (1)
     {
         if (died_or_ended(philo->props))
@@ -90,13 +86,15 @@ void *live(void *arg)
 int died(t_philo *philo)
 {
     long last_ate;
+    long now;
     t_state curr_state;
 
+    now = get_ms();
     pthread_mutex_lock(&philo->state_lock);
     last_ate = philo->born_or_last_ate_in_ms;
     curr_state = philo->state;
     pthread_mutex_unlock(&philo->state_lock);
-    if (get_ms() - last_ate >= philo->props->time_to_die && curr_state != EATING)
+    if (now - last_ate >= philo->props->time_to_die && curr_state != EATING)
     {
         pthread_mutex_lock(&philo->props->death_lock);
         philo->props->some_philo_died = 1;
@@ -124,7 +122,7 @@ void *track(void *arg)
                 return NULL;
             i++;
         }
-        usleep(1000);
+        usleep(100);
     }
     return NULL;
 }

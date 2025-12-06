@@ -9,10 +9,7 @@ int sim_step_or_end(t_philo *philo)
         pthread_mutex_lock(&philo->props->death_lock);
         philo->props->finished_philos += 1;
         if (philo->props->finished_philos == philo->props->number_of_philosophers)
-        {
             philo->props->simulation_end = 1;
-            pthread_mutex_unlock(&philo->props->death_lock);
-        }
         pthread_mutex_unlock(&philo->props->death_lock);
         pthread_mutex_unlock(&philo->state_lock);
         return 1;
@@ -40,21 +37,16 @@ void philo_think(t_philo *philo)
 
 void assign_forks(t_philo *philo, int *first_fork, int *second_fork)
 {
-    int first;
-    int second;
-
     if (philo->id % 2 == 0)
     {
-        first = (philo->id + 1) % philo->props->number_of_philosophers;
-        second = philo->id;
+        *first_fork = (philo->id + 1) % philo->props->number_of_philosophers;
+        *second_fork = philo->id;
     }
     else
     {
-        first = philo->id;
-        second = (philo->id + 1) % philo->props->number_of_philosophers;
+        *first_fork = philo->id;
+        *second_fork = (philo->id + 1) % philo->props->number_of_philosophers;
     }
-    *second_fork = second;
-    *first_fork = first;
 }
 
 long get_ms(void)

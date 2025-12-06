@@ -86,7 +86,7 @@ void smart_sleep(long ms, t_philo *philo)
         pthread_mutex_unlock(&philo->props->death_lock);
         if (philo_died)
             break;
-        usleep(1000);
+        usleep(100);
     }
 }
 
