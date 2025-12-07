@@ -4,6 +4,8 @@ int custom_atoi(char *str, int *err)
 {
     double res;
 
+    while (*str == ' ')
+        str++;
     if (*str == '+')
         str++;
     res = 0;
@@ -11,16 +13,16 @@ int custom_atoi(char *str, int *err)
     {
         if (!(*str >= '0' && *str <= '9'))
         {
-            fprintf(stderr, "Error: Non-numeric character\n");
+            printf("Error: Non-numeric character\n");
             *err = 1;
             return 0;
         }
         res = res * 10 + (*str - '0');
         str++;
     }
-    if (res > 2147483647 || res < -2147483648)
+    if (res > 2147483647)
     {
-        fprintf(stderr, "Error: Integer overflow\n");
+        printf("Error: Integer overflow\n");
         *err = 1;
         return 0;
     }
@@ -64,9 +66,9 @@ int check_and_store(int ac, char *av[], t_props *args)
 
 int died_or_ended(t_props *props)
 {
-    int died_end;
+    bool died_end;
 
-    died_end = 0;
+    died_end = false;
     pthread_mutex_lock(&props->death_lock);
     died_end = props->some_philo_died || props->simulation_end;
     pthread_mutex_unlock(&props->death_lock);
@@ -90,24 +92,16 @@ void smart_sleep(long ms, t_philo *philo)
     }
 }
 
-void safe_print(t_philo *philo, char *msg)
+void assign_forks(t_philo *philo, t_fork *forks, int ph_position)
 {
-    int philo_died;
+    int ph_number;
 
-    if (strcmp(msg, "died") == 0)
+    ph_number = philo->props->number_of_philosophers;
+    philo->first_fork = &forks[(ph_position + 1) % ph_number];
+    philo->second_fork = &forks[ph_position];
+    if (ph_position % 2)
     {
-        pthread_mutex_lock(&philo->props->print_lock);
-        printf(RED "%ld" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
-        pthread_mutex_unlock(&philo->props->print_lock);
-        return;
-    }
-    pthread_mutex_lock(&philo->props->death_lock);
-    philo_died = philo->props->some_philo_died;
-    pthread_mutex_unlock(&philo->props->death_lock);
-    if (!philo_died)
-    {
-        pthread_mutex_lock(&philo->props->print_lock);
-        printf(GREEN "%ld" RESET " %d %s\n", get_ms() - philo->props->start_time, philo->id + 1, msg);
-        pthread_mutex_unlock(&philo->props->print_lock);
+        philo->first_fork = &forks[ph_position];
+        philo->second_fork = &forks[(ph_position + 1) % ph_number];
     }
 }

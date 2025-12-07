@@ -1,27 +1,27 @@
 #include "philo.h"
 
-int pickup_forks(t_philo *philo, int second_fork, int first_fork)
+int pickup_forks(t_philo *philo)
 {
-    if (second_fork == first_fork)
+    if (philo->props->number_of_philosophers == 1)
     {
-        pthread_mutex_lock(&philo->forks[second_fork]);
+        pthread_mutex_lock(&philo->second_fork->fork);
         safe_print(philo, "has taken fork");
         smart_sleep(philo->props->time_to_die, philo);
-        pthread_mutex_unlock(&philo->forks[second_fork]);
+        pthread_mutex_unlock(&philo->second_fork->fork);
         return 1;
     }
-    pthread_mutex_lock(&philo->forks[first_fork]);
+    pthread_mutex_lock(&philo->first_fork->fork);
     if (died_or_ended(philo->props))
     {
-        pthread_mutex_unlock(&philo->forks[first_fork]);
+        pthread_mutex_unlock(&philo->first_fork->fork);
         return 0;
     }
     safe_print(philo, "has taken fork");
-    pthread_mutex_lock(&philo->forks[second_fork]);
+    pthread_mutex_lock(&philo->second_fork->fork);
     if (died_or_ended(philo->props))
     {
-        pthread_mutex_unlock(&philo->forks[first_fork]);
-        pthread_mutex_unlock(&philo->forks[second_fork]);
+        pthread_mutex_unlock(&philo->first_fork->fork);
+        pthread_mutex_unlock(&philo->second_fork->fork);
         return 0;
     }
     safe_print(philo, "has taken fork");
@@ -31,27 +31,22 @@ int pickup_forks(t_philo *philo, int second_fork, int first_fork)
 int eat(t_philo *philo)
 {
     int fork_state;
-    int first_fork;
-    int second_fork;
 
-    assign_forks(philo, &first_fork, &second_fork); // Asign them in the beginning 
-    // if (philo->id % 2 != 0)
-    //     usleep(100);
-    fork_state = pickup_forks(philo, second_fork, first_fork);
+    fork_state = pickup_forks(philo);
     if (fork_state == 0 || fork_state == 1)
         return 0;
 
     pthread_mutex_lock(&philo->state_lock);
-    philo->is_eating=1;
+    philo->is_eating = true;
     philo->born_or_last_ate_in_ms = get_ms();
-    philo->number_of_times_eaten += 1;
+    philo->times_ate += 1;
     pthread_mutex_unlock(&philo->state_lock);
-    
+
     safe_print(philo, "is eating");
     smart_sleep(philo->props->time_to_eat, philo);
-    
-    pthread_mutex_unlock(&philo->forks[first_fork]);
-    pthread_mutex_unlock(&philo->forks[second_fork]);
+
+    pthread_mutex_unlock(&philo->first_fork->fork);
+    pthread_mutex_unlock(&philo->second_fork->fork);
     return 1;
 }
 
@@ -91,7 +86,7 @@ int died(t_philo *philo)
     last_ate = philo->born_or_last_ate_in_ms;
     is_eating = philo->is_eating;
     pthread_mutex_unlock(&philo->state_lock);
-    if (now - last_ate >= philo->props->time_to_die && !is_eating )
+    if (now - last_ate >= philo->props->time_to_die && !is_eating)
     {
         pthread_mutex_lock(&philo->props->death_lock);
         philo->props->some_philo_died = 1;
@@ -124,94 +119,103 @@ void *track(void *arg)
     return NULL;
 }
 
-void run_threads(t_props *props)
+void philos_init(t_props *props)
 {
-    t_philo *philos;
-    t_monitor *monitor;
-    pthread_mutex_t *forks;
     int i;
-    int total;
+    t_philo *philos;
 
-    props->some_philo_died = 0;
+    philos = props->philos;
+    i = -1;
+    while (++i < props->number_of_philosophers)
+    {
+        pthread_mutex_init(&philos[i].state_lock, NULL);
+        philos[i].id = i + 1;
+        philos[i].times_ate = 0;
+        philos[i].is_eating = false;
+        philos[i].props = props;
+        assign_forks(&philos[i], props->forks, i);
+    }
+}
+
+void *props_init(t_props *props)
+{
+    int i;
+
     props->finished_philos = 0;
-    props->simulation_end = 0;
+    props->all_philos_ready = false;
+    props->some_philo_died = false;
+    props->simulation_end = false;
     props->start_time = get_ms();
-
-    total = props->number_of_philosophers;
-    philos = malloc(sizeof(t_philo) * props->number_of_philosophers);
-    if (!philos)
+    props->forks = safe_malloc(sizeof(t_fork) * props->number_of_philosophers);
+    if (!props->forks)
+        return NULL;
+    props->philos = safe_malloc(sizeof(t_philo) * props->number_of_philosophers);
+    if (!props->philos)
     {
-        printf("Error: Couldn't allocate memory for philos\n");
-        return;
+        free(props->forks);
+        return NULL;
     }
-    forks = malloc(sizeof(pthread_mutex_t) * props->number_of_philosophers);
-    if (!forks)
+    i = -1;
+    while (++i < props->number_of_philosophers)
     {
-        printf("Error: Couldn't allocate memory for forks\n");
-        free(philos);
-        return;
-    }
-
-    i = 0;
-    while (i < total)
-    {
-        pthread_mutex_init(&forks[i], NULL);
-        i++;
+        pthread_mutex_init(&props->forks[i].fork, NULL);
+        props->forks[i].id = i;
     }
     pthread_mutex_init(&props->death_lock, NULL);
     pthread_mutex_init(&props->print_lock, NULL);
+    philos_init(props);
+    return props;
+}
 
-    i = 0;
-    while (i < total)
-    {
-        pthread_mutex_init(&philos[i].state_lock, NULL);
-        philos[i].forks = forks;
-        philos[i].id = i;
-        philos[i].props = props;
-        philos[i].number_of_times_eaten = 0;
-        philos[i].is_eating = 0;
-        philos[i].born_or_last_ate_in_ms = props->start_time;
-        pthread_create(&philos[i].thread, NULL, live, (void *)&philos[i]);
-        // usleep(1);
-        i++;
-    }
+void run_threads(t_props *props)
+{
+    t_monitor *monitor;
+    void *res;
+    int i;
+    int total;
+
+    res = props_init(props);
+    if (res == NULL)
+        return;
+    total = props->number_of_philosophers;
     monitor = malloc(sizeof(t_monitor));
     if (!monitor)
     {
         printf("Error: Couldn't allocate memory for monitor\n");
-        free(philos);
-        free(forks);
+        free(props->philos);
+        free(props->forks);
         return;
     }
+
+    i = -1;
+    while (++i < total)
+        pthread_create(&props->philos[i].thread, NULL, live, (void *)&props->philos[i]);
+
     monitor->props = props;
-    monitor->philos = philos;
     pthread_create(&monitor->tracker, NULL, track, (void *)monitor);
 
     i = 0;
     while (i < total)
     {
-        pthread_join(philos[i].thread, NULL);
+        pthread_join(props->philos[i].thread, NULL);
         i++;
     }
     pthread_join(monitor->tracker, NULL);
 
-    i = 0;
-    while (i < total)
-    {
-        pthread_mutex_destroy(&forks[i]);
-        i++;
-    }
+    i = -1;
+    while (++i < total)
+        pthread_mutex_destroy(&props->forks[i].fork);
     pthread_mutex_destroy(&props->death_lock);
     pthread_mutex_destroy(&props->print_lock);
 
     i = 0;
     while (i < props->number_of_philosophers)
     {
-        pthread_mutex_destroy(&philos[i].state_lock);
+        pthread_mutex_destroy(&props->philos[i].state_lock);
         i++;
     }
 
-    free(philos);
-    free(forks);
+    free(props->forks);
+    free(props->philos);
     free(monitor);
 }

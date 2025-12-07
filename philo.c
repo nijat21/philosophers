@@ -16,7 +16,7 @@
 
 int main(int ac, char **av)
 {
-
+    int res;
     t_props *props;
 
     if (!(ac == 5 || ac == 6))
@@ -31,14 +31,11 @@ int main(int ac, char **av)
         printf(GREEN "All philosophers have eaten enough!\n" RESET);
         return 0;
     }
-    props = malloc(sizeof(t_props));
+    props = safe_malloc(sizeof(t_props));
     if (!props)
-    {
-        printf("Memory couldn't be allocated\n");
         return 0;
-    }
-    int res = check_and_store(ac, av, props);
-    // printf("wrong_philos: %d\n", res);
+
+    res = check_and_store(ac, av, props);
     if (res)
     {
         free(props);
