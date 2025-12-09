@@ -1,107 +1,89 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/12/09 00:59:01 by nismayil          #+#    #+#             */
+/*   Updated: 2025/12/09 11:19:38 by nismayil         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-int custom_atoi(char *str, int *err)
+long get_time(t_time_code time_code)
 {
-    double res;
-
-    while (*str == ' ')
-        str++;
-    if (*str == '+')
-        str++;
-    res = 0;
-    while (*str)
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL))
     {
-        if (!(*str >= '0' && *str <= '9'))
-        {
-            printf("Error: Non-numeric character\n");
-            *err = 1;
-            return 0;
-        }
-        res = res * 10 + (*str - '0');
-        str++;
+        printf("Error: Couldn't get time\n");
+        return -1;
     }
-    if (res > 2147483647)
+    if (time_code == SECOND)
+        return (tv.tv_sec + tv.tv_usec / 1e6);
+    else if (time_code == MILLISECOND)
+        return (tv.tv_sec * 1e3 + tv.tv_usec / 1e3);
+    else if (time_code == MICROSECOND)
+        return tv.tv_sec * 1e6 + tv.tv_usec;
+    else
     {
-        printf("Error: Integer overflow\n");
-        *err = 1;
-        return 0;
+        printf("Error: Wrong time code\n");
+        return -1;
     }
-    return (int)res;
 }
 
-int check_and_store(int ac, char *av[], t_props *args)
-{
-    int i;
-    int err;
-    int res;
-
-    err = 0;
-    i = 1;
-    while (i < ac)
-    {
-        res = custom_atoi(av[i], &err);
-        if (err)
-            return 1;
-        else if (res < 0)
-        {
-            printf("Error: Arguments can't be negative\n");
-            return 1;
-        }
-        else if (i != 5 && res <= 0)
-        {
-            printf("Error: Only [number_of_times_each_philosopher_must_eat] can be 0\n");
-            return 1;
-        }
-        i++;
-    }
-    args->number_of_philosophers = custom_atoi(av[1], &err);
-    args->time_to_die = custom_atoi(av[2], &err);
-    args->time_to_eat = custom_atoi(av[3], &err);
-    args->time_to_sleep = custom_atoi(av[4], &err);
-    args->number_of_times_each_philosopher_must_eat = -1;
-    if (ac == 6)
-        args->number_of_times_each_philosopher_must_eat = custom_atoi(av[5], &err);
-    return 0;
-}
-
-int died_or_ended(t_props *props)
-{
-    bool died_end;
-
-    died_end = false;
-    pthread_mutex_lock(&props->death_lock);
-    died_end = props->some_philo_died || props->simulation_end;
-    pthread_mutex_unlock(&props->death_lock);
-    return died_end;
-}
-
-void smart_sleep(long ms, t_philo *philo)
+void smart_sleep(long usec, t_props *props)
 {
     long start;
-    int philo_died;
+    long elapsed;
+    long rem;
 
-    start = get_ms();
-    while (get_ms() - start < ms)
+    start = get_time(MICROSECOND);
+    while (get_time(MICROSECOND) - start < usec)
     {
-        pthread_mutex_lock(&philo->props->death_lock);
-        philo_died = philo->props->some_philo_died;
-        pthread_mutex_unlock(&philo->props->death_lock);
-        if (philo_died)
+        if (sim_ended(props))
             break;
-        usleep(100);
+        elapsed = get_time(MICROSECOND) - start;
+        rem = usec - elapsed;
+        if (rem > 1e3)
+            usleep(rem / 2);
+        else
+        {
+            while (get_time(MICROSECOND) - start < usec)
+                ;
+        }
     }
 }
 
-void assign_forks(t_philo *philo, t_fork *forks, int ph_position)
+void clean(t_props *props)
 {
-    int ph_number;
+    int i;
+    t_philo *philo;
 
-    ph_number = philo->props->number_of_philosophers;
-    philo->first_fork = &forks[(ph_position + 1) % ph_number];
-    philo->second_fork = &forks[ph_position];
-    if (ph_position % 2)
+    i = -1;
+    while (++i < props->number_of_philosophers)
     {
-        philo->first_fork = &forks[ph_position];
-        philo->second_fork = &forks[(ph_position + 1) % ph_number];
+        philo = &props->philos[i];
+        pthread_mutex_destroy(&philo->philo_lock);
+        pthread_mutex_destroy(&props->forks[i].fork);
     }
+    pthread_mutex_destroy(&props->props_lock);
+    pthread_mutex_destroy(&props->write_lock);
+    free(props->forks);
+    free(props->philos);
+    free(props);
+}
+
+void *safe_malloc(size_t bytes)
+{
+    void *mem;
+
+    mem = malloc(bytes);
+    if (!mem)
+    {
+        printf("Error: Couldn't allocate memory\n");
+        return NULL;
+    }
+    return mem;
 }
