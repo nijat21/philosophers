@@ -12,23 +12,24 @@
 
 #include "philo.h"
 
-void write_status(t_status status, t_philo *philo)
+void	write_status(t_status status, t_philo *philo)
 {
-    long elapsed;
+	long	elapsed;
 
-    if (philo->full)
-        return;
-    elapsed = get_time(MILLISECOND) - philo->props->start_time;
-    pthread_mutex_lock(&philo->props->write_lock);
-    if ((status == TAKE_FIRST_FORK || status == TAKE_SECOND_FORK) && !sim_ended(philo->props))
-        printf(GREEN "%ld" RESET " %ld has taken a fork\n", elapsed, philo->id);
-    else if (status == EATING && !sim_ended(philo->props))
-        printf(GREEN "%ld" RESET " %ld is eating\n", elapsed, philo->id);
-    else if (status == SLEEPING && !sim_ended(philo->props))
-        printf(GREEN "%ld" RESET " %ld is sleeping\n", elapsed, philo->id);
-    else if (status == THINKING && !sim_ended(philo->props))
-        printf(GREEN "%ld" RESET " %ld is thinking\n", elapsed, philo->id);
-    else if (status == DIED)
-        printf(RED "%ld" RESET " %ld died\n", elapsed, philo->id);
-    pthread_mutex_unlock(&philo->props->write_lock);
+	if (philo->full)
+		return ;
+	elapsed = get_time(MILLISECOND) - philo->props->start_time;
+	pthread_mutex_lock(&philo->props->write_lock);
+	if ((status == TAKE_FIRST_FORK || status == TAKE_SECOND_FORK)
+		&& !sim_ended(philo->props))
+		printf(GREEN "%ld" RESET " %ld has taken a fork\n", elapsed, philo->id);
+	else if (status == EATING && !sim_ended(philo->props))
+		printf(GREEN "%ld" RESET " %ld is eating\n", elapsed, philo->id);
+	else if (status == SLEEPING && !sim_ended(philo->props))
+		printf(GREEN "%ld" RESET " %ld is sleeping\n", elapsed, philo->id);
+	else if (status == THINKING && !sim_ended(philo->props))
+		printf(GREEN "%ld" RESET " %ld is thinking\n", elapsed, philo->id);
+	else if (status == DIED)
+		printf(RED "%ld" RESET " %ld died\n", elapsed, philo->id);
+	pthread_mutex_unlock(&philo->props->write_lock);
 }
