@@ -14,6 +14,7 @@ void philos_init(t_props *props)
 		philos[i].times_ate = 0;
 		philos[i].counted = false;
 		philos[i].is_eating = false;
+		philos[i].keep_last_out = true;
 		philos[i].props = props;
 		assign_forks(&philos[i], props->forks);
 	}

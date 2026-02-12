@@ -22,6 +22,9 @@ typedef struct s_philo
     long id;
     long times_ate;
     long born_ate_in_ms;
+
+    bool keep_last_out;
+
     bool counted;
     bool is_eating;
     pthread_mutex_t lock;

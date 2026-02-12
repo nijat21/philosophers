@@ -1,48 +1,7 @@
 #include "philo.h"
 
-/*
-	1. Number of times must eat -> doesn't work -> Fixed
-	2. Still some cases, start time isn't correctly assigned
-		1770734207867 3 has taken fork -> Fixed
-	3. some_p_died all philos full prints died -> Fixed
-		3600 4 is eating
-		3601 2 died
-	4. Test cases to pass ->
-		./philo 200 410 200 200 5 -> not die
-		./philo 5 800 200 200 -> not die
-		./philo 5 600 200 200 -> not die
-
-*/
-
-bool should_wait_for_hungrier(t_philo *philo)
-{
-	long my_last_meal;
-	long other_last_meal;
-	int i;
-	t_philo *other;
-
-	my_last_meal = get_long(&philo->lock, &philo->born_ate_in_ms);
-	i = -1;
-	while (++i < philo->props->n_philos)
-	{
-		if (i == philo->id - 1)
-			continue;
-		other = &philo->props->philos[i];
-		if (get_bool(&other->lock, &other->is_eating))
-			continue;
-		other_last_meal = get_long(&other->lock, &other->born_ate_in_ms);
-		bool shares_fork = (i == (philo->id - 1 + 1) % philo->props->n_philos) ||
-						   (i == (philo->id - 1 - 1 + philo->props->n_philos) % philo->props->n_philos);
-		if (shares_fork && (other_last_meal < my_last_meal - 10))
-			return true;
-	}
-	return false;
-}
-
 void eat(t_philo *philo)
 {
-	// while (should_wait_for_hungrier(philo) && !get_bool(&philo->props->lock, &philo->props->some_p_died))
-	// 	usleep(700);
 	pthread_mutex_lock(philo->first_fork);
 	safe_print(philo, "has taken fork");
 	pthread_mutex_lock(philo->second_fork);
@@ -93,32 +52,6 @@ bool start_times_available(t_props *props)
 	return true;
 }
 
-void think(t_philo *philo)
-{
-	long t_think;
-
-	if (philo->props->n_philos % 2 == 0)
-		return;
-	t_think = philo->props->t_to_eat * 2 - philo->props->t_to_sleep;
-	if (t_think < 0)
-		t_think = 0;
-	safe_sleep(t_think * 0.41598, philo);
-}
-
-void sync_philos(t_philo *philo)
-{
-	if (philo->props->n_philos % 2 == 0)
-	{
-		if (philo->id % 2 == 0)
-			safe_sleep(60, philo);
-	}
-	else
-	{
-		if (philo->id % 2)
-			think(philo);
-	}
-}
-
 void *live(void *arg)
 {
 	t_philo *philo;
@@ -130,8 +63,8 @@ void *live(void *arg)
 	while (!start_times_available(props))
 		usleep(20);
 
-	// sync_philos(philo);
-
+	if (philo->id % 2)
+		usleep(1000);
 	while (!sim_ended(props))
 	{
 		eat(philo);
@@ -146,8 +79,7 @@ void *live(void *arg)
 		if (sim_ended(props))
 			return NULL;
 		safe_print(philo, "is thinking");
-
-		// think(philo);
+		usleep(500);
 	}
 	return (NULL);
 }
