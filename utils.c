@@ -2,106 +2,80 @@
 
 int custom_atoi(char *str, int *err)
 {
-    double res;
+	double res;
 
-    while (*str == ' ')
-        str++;
-    if (*str == '+')
-        str++;
-    res = 0;
-    while (*str)
-    {
-        if (!(*str >= '0' && *str <= '9'))
-        {
-            printf("Error: Non-numeric character\n");
-            *err = 1;
-            return 0;
-        }
-        res = res * 10 + (*str - '0');
-        str++;
-    }
-    if (res > 2147483647)
-    {
-        printf("Error: Integer overflow\n");
-        *err = 1;
-        return 0;
-    }
-    return (int)res;
+	while (*str == ' ')
+		str++;
+	if (*str == '+')
+		str++;
+	res = 0;
+	while (*str)
+	{
+		if (!(*str >= '0' && *str <= '9'))
+		{
+			printf("Error: Non-numeric character\n");
+			*err = 1;
+			return (0);
+		}
+		res = res * 10 + (*str - '0');
+		str++;
+	}
+	if (res > 2147483647)
+	{
+		printf("Error: Integer overflow\n");
+		*err = 1;
+		return (0);
+	}
+	return ((int)res);
 }
 
-int check_and_store(int ac, char *av[], t_props *args)
+long get_ms(void)
 {
-    int i;
-    int err;
-    int res;
+	struct timeval tv;
 
-    err = 0;
-    i = 1;
-    while (i < ac)
-    {
-        res = custom_atoi(av[i], &err);
-        if (err)
-            return 1;
-        else if (res < 0)
-        {
-            printf("Error: Arguments can't be negative\n");
-            return 1;
-        }
-        else if (i != 5 && res <= 0)
-        {
-            printf("Error: Only [number_of_times_each_philosopher_must_eat] can be 0\n");
-            return 1;
-        }
-        i++;
-    }
-    args->number_of_philosophers = custom_atoi(av[1], &err);
-    args->time_to_die = custom_atoi(av[2], &err);
-    args->time_to_eat = custom_atoi(av[3], &err);
-    args->time_to_sleep = custom_atoi(av[4], &err);
-    args->number_of_times_each_philosopher_must_eat = -1;
-    if (ac == 6)
-        args->number_of_times_each_philosopher_must_eat = custom_atoi(av[5], &err);
-    return 0;
+	if (gettimeofday(&tv, NULL) < 0)
+	{
+		perror("gettimeofday");
+		return (-1);
+	}
+	return (long)(tv.tv_sec * 1e3 + tv.tv_usec / 1e3);
 }
 
-int died_or_ended(t_props *props)
+void assign_forks(t_philo *philo, pthread_mutex_t *forks)
 {
-    bool died_end;
+	int n_philos;
+	long first;
+	long second;
 
-    died_end = false;
-    pthread_mutex_lock(&props->death_lock);
-    died_end = props->some_philo_died || props->simulation_end;
-    pthread_mutex_unlock(&props->death_lock);
-    return died_end;
+	n_philos = philo->props->n_philos;
+	if (philo->id % 2)
+	{
+		first = philo->id % n_philos;
+		second = philo->id - 1;
+	}
+	else
+	{
+		first = philo->id - 1;
+		second = philo->id % n_philos;
+	}
+	philo->first_fork = &forks[first];
+	philo->second_fork = &forks[second];
 }
 
-void smart_sleep(long ms, t_philo *philo)
+void clear_all(t_props *props)
 {
-    long start;
-    int philo_died;
+	int i;
 
-    start = get_ms();
-    while (get_ms() - start < ms)
-    {
-        pthread_mutex_lock(&philo->props->death_lock);
-        philo_died = philo->props->some_philo_died;
-        pthread_mutex_unlock(&philo->props->death_lock);
-        if (philo_died)
-            break;
-        usleep(100);
-    }
-}
-
-void assign_forks(t_philo *philo, t_fork *forks, int ph_position)
-{
-    int ph_number;
-
-    ph_number = philo->props->number_of_philosophers;
-    philo->first_fork = &forks[(ph_position + 1) % ph_number];
-    philo->second_fork = &forks[ph_position];
-    if (ph_position % 2)
-    {
-        philo->first_fork = &forks[ph_position];
-        philo->second_fork = &forks[(ph_position + 1) % ph_number];
-    }
+	i = -1;
+	while (++i < props->n_philos)
+		pthread_mutex_destroy(&props->forks[i]);
+	pthread_mutex_destroy(&props->lock);
+	pthread_mutex_destroy(&props->print_lock);
+	i = -1;
+	while (++i < props->n_philos)
+		pthread_mutex_destroy(&props->philos[i].lock);
+	free(props->forks);
+	free(props->philos);
+	free(props->monitor);
+	free(props);
 }
