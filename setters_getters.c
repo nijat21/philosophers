@@ -1,8 +1,8 @@
 #include "philo.h"
 
-bool get_bool(pthread_mutex_t *lock, bool *val)
+bool	get_bool(pthread_mutex_t *lock, bool *val)
 {
-	bool res;
+	bool	res;
 
 	pthread_mutex_lock(lock);
 	res = *val;
@@ -10,16 +10,16 @@ bool get_bool(pthread_mutex_t *lock, bool *val)
 	return (res);
 }
 
-void set_bool(pthread_mutex_t *lock, bool *val, bool new_val)
+void	set_bool(pthread_mutex_t *lock, bool *val, bool new_val)
 {
 	pthread_mutex_lock(lock);
 	*val = new_val;
 	pthread_mutex_unlock(lock);
 }
 
-long get_long(pthread_mutex_t *lock, long *val)
+long	get_long(pthread_mutex_t *lock, long *val)
 {
-	long res;
+	long	res;
 
 	pthread_mutex_lock(lock);
 	res = *val;
@@ -27,14 +27,14 @@ long get_long(pthread_mutex_t *lock, long *val)
 	return (res);
 }
 
-void set_long(pthread_mutex_t *lock, long *val, long new_val)
+void	set_long(pthread_mutex_t *lock, long *val, long new_val)
 {
 	pthread_mutex_lock(lock);
 	*val = new_val;
 	pthread_mutex_unlock(lock);
 }
 
-void increment_long(pthread_mutex_t *lock, long *val)
+void	increment_long(pthread_mutex_t *lock, long *val)
 {
 	pthread_mutex_lock(lock);
 	(*val)++;

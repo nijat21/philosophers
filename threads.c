@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   threads.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/13 21:20:52 by nismayil          #+#    #+#             */
+/*   Updated: 2026/02/14 00:08:47 by nismayil         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-void eat(t_philo *philo)
+void	eat(t_philo *philo)
 {
 	pthread_mutex_lock(philo->first_fork);
 	safe_print(philo, "has taken fork");
@@ -16,78 +28,55 @@ void eat(t_philo *philo)
 	pthread_mutex_unlock(philo->second_fork);
 }
 
-void *track(void *arg)
+void	*track(void *arg)
 {
-	t_monitor *mon;
-	t_props *props;
+	t_monitor	*mon;
+	t_props		*props;
 
 	mon = (t_monitor *)arg;
 	props = mon->props;
 	while (!died(props))
 	{
 		if (all_full(props))
-			return NULL;
-		usleep(10);
+			return (NULL);
+		usleep(100);
 	}
 	return (NULL);
 }
 
-bool start_times_available(t_props *props)
+void	*live(void *arg)
 {
-	t_philo *philo;
-	int i;
-
-	if (!get_long(&props->lock, &props->start_t_ms))
-		return false;
-	else
-	{
-		i = -1;
-		while (++i < props->n_philos)
-		{
-			philo = &props->philos[i];
-			if (!get_long(&philo->lock, &philo->born_ate_in_ms))
-				return false;
-		}
-	}
-	return true;
-}
-
-void *live(void *arg)
-{
-	t_philo *philo;
-	t_props *props;
+	t_philo	*philo;
+	t_props	*props;
 
 	philo = (t_philo *)arg;
 	props = philo->props;
-	increment_long(&props->lock, &props->n_ready);
-	while (!start_times_available(props))
+	increment_long(&philo->props->lock, &philo->props->n_ready);
+	while (!start_times_available(philo->props))
 		usleep(20);
-
 	if (philo->id % 2)
 		usleep(1000);
 	while (!sim_ended(props))
 	{
 		eat(philo);
 		if (sim_ended(props))
-			return NULL;
+			return (NULL);
 		if (get_long(&philo->lock, &philo->times_ate) == props->n_must_eat)
-			return NULL;
-		if (sim_ended(props))
-			return NULL;
+			return (NULL);
 		safe_print(philo, "is sleeping");
 		safe_sleep(philo->props->t_to_sleep, philo);
 		if (sim_ended(props))
-			return NULL;
+			return (NULL);
 		safe_print(philo, "is thinking");
 		usleep(500);
 	}
 	return (NULL);
 }
 
-void *single_philo(void *arg)
+void	*single_philo(void *arg)
 {
-	t_philo *philo;
-	t_props *props;
+	t_philo	*philo;
+	t_props	*props;
 
 	philo = (t_philo *)arg;
 	props = philo->props;
@@ -98,43 +87,32 @@ void *single_philo(void *arg)
 	safe_print(philo, "has taken fork");
 	safe_sleep(philo->props->t_to_die, philo);
 	pthread_mutex_unlock(philo->second_fork);
-	return NULL;
+	return (NULL);
 }
 
-void sim_dinner(t_props *props)
+void	sim_dinner(t_props *props)
 {
-	t_monitor *mon;
-	t_philo *philo;
-	void *res;
-	int i;
+	t_monitor	*mon;
+	int			i;
 
-	res = props_init(props);
-	if (!res)
-		return;
 	mon = malloc(sizeof(t_monitor));
 	if (!mon)
-		return;
+		return ;
 	props->monitor = mon;
 	mon->props = props;
 	if (props->n_philos == 1)
-		pthread_create(&props->philos[0].thread, NULL, single_philo, (void *)&props->philos[0]);
+		pthread_create(&props->philos[0].thread, NULL, single_philo,
+			(void *)&props->philos[0]);
 	else
 	{
 		i = -1;
 		while (++i < props->n_philos)
-			pthread_create(&props->philos[i].thread, NULL, live, (void *)&props->philos[i]);
+			pthread_create(&props->philos[i].thread, NULL, live,
+				(void *)&props->philos[i]);
 	}
 	while (get_long(&props->lock, &props->n_ready) != props->n_philos)
 		usleep(20);
-	pthread_mutex_lock(&props->lock);
-	props->start_t_ms = get_ms();
-	i = -1;
-	while (++i < props->n_philos)
-	{
-		philo = &props->philos[i];
-		set_long(&philo->lock, &philo->born_ate_in_ms, props->start_t_ms);
-	}
-	pthread_mutex_unlock(&props->lock);
+	set_start_time(props);
 	pthread_create(&mon->tracker, NULL, track, (void *)mon);
 	i = -1;
 	while (++i < props->n_philos)

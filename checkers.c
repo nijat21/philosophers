@@ -1,33 +1,33 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   checkers.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/13 21:20:48 by nismayil          #+#    #+#             */
+/*   Updated: 2026/02/14 00:00:39 by nismayil         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-bool sim_ended(t_props *props)
+bool	sim_ended(t_props *props)
 {
-	bool res;
+	bool	res;
 
 	res = false;
 	pthread_mutex_lock(&props->lock);
 	if (props->some_p_died || props->sim_end)
 		res = true;
 	pthread_mutex_unlock(&props->lock);
-	return res;
+	return (res);
 }
 
-void wait_threads(t_props *props)
+bool	all_full(t_props *props)
 {
-	long ready;
-
-	ready = get_long(&props->lock, &props->n_ready);
-	while (ready != props->n_philos)
-	{
-		usleep(10);
-		ready = get_long(&props->lock, &props->n_ready);
-	}
-}
-
-bool all_full(t_props *props)
-{
-	int i;
-	t_philo *philo;
+	int		i;
+	t_philo	*philo;
 
 	i = -1;
 	while (++i < props->n_philos && (props->n_must_eat != -1))
@@ -44,22 +44,22 @@ bool all_full(t_props *props)
 			{
 				props->sim_end = true;
 				pthread_mutex_unlock(&props->lock);
-				return true;
+				return (true);
 			}
 			pthread_mutex_unlock(&props->lock);
 		}
 		else
 			pthread_mutex_unlock(&philo->lock);
 	}
-	return false;
+	return (false);
 }
 
-bool died(t_props *props)
+bool	died(t_props *props)
 {
-	long last_ate;
-	bool is_eating;
-	int i;
-	t_philo *philo;
+	long	last_ate;
+	bool	is_eating;
+	int		i;
+	t_philo	*philo;
 
 	i = -1;
 	while (++i < props->n_philos)
@@ -78,4 +78,24 @@ bool died(t_props *props)
 		}
 	}
 	return (false);
+}
+
+bool	start_times_available(t_props *props)
+{
+	t_philo *philo;
+	int i;
+
+	if (!get_bool(&props->lock, &props->start_t_set))
+		return (false);
+	else
+	{
+		i = -1;
+		while (++i < props->n_philos)
+		{
+			philo = &props->philos[i];
+			if (!get_bool(&philo->lock, &philo->start_t_set))
+				return (false);
+		}
+	}
+	return (true);
 }

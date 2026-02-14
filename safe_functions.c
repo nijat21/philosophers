@@ -1,8 +1,20 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   safe_functions.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/02/13 21:20:36 by nismayil          #+#    #+#             */
+/*   Updated: 2026/02/13 22:16:25 by nismayil         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-void *safe_malloc(size_t bytes)
+void	*safe_malloc(size_t bytes)
 {
-	void *mem;
+	void	*mem;
 
 	mem = malloc(bytes);
 	if (!mem)
@@ -13,12 +25,12 @@ void *safe_malloc(size_t bytes)
 	return (mem);
 }
 
-void safe_sleep(long ms, t_philo *philo)
+void	safe_sleep(long ms, t_philo *philo)
 {
-	long start;
-	bool some_p_died;
-	long rem;
-	long elaps;
+	long	start;
+	bool	some_p_died;
+	long	rem;
+	long	elaps;
 
 	start = get_ms();
 	elaps = 0;
@@ -27,7 +39,7 @@ void safe_sleep(long ms, t_philo *philo)
 		rem = ms - elaps;
 		some_p_died = get_bool(&philo->props->lock, &philo->props->some_p_died);
 		if (some_p_died)
-			return;
+			return ;
 		if (rem > 2)
 			usleep(1000);
 		else if (rem > 1)
@@ -38,11 +50,11 @@ void safe_sleep(long ms, t_philo *philo)
 	}
 }
 
-void safe_print(t_philo *philo, char *msg)
+void	safe_print(t_philo *philo, char *msg)
 {
-	t_props *props;
-	bool some_p_died;
-	bool sim_end;
+	t_props	*props;
+	bool	some_p_died;
+	bool	sim_end;
 
 	props = philo->props;
 	some_p_died = get_bool(&props->lock, &props->some_p_died);
@@ -50,18 +62,18 @@ void safe_print(t_philo *philo, char *msg)
 	if (strcmp(msg, "died") == 0 && !sim_end)
 	{
 		pthread_mutex_lock(&props->print_lock);
-		printf(RED "%ld" RESET " %ld %s\n", get_ms() - props->start_t_ms, philo->id,
-			   msg);
+		printf(RED "%ld" RESET " %ld %s\n", get_ms() - props->start_t_ms,
+			philo->id, msg);
 		pthread_mutex_unlock(&props->print_lock);
 		if (!some_p_died)
 			some_p_died = true;
-		return;
+		return ;
 	}
 	if (!some_p_died && !sim_end)
 	{
 		pthread_mutex_lock(&props->print_lock);
 		printf(GREEN "%ld" RESET " %ld %s\n", get_ms() - props->start_t_ms,
-			   philo->id, msg);
+			philo->id, msg);
 		pthread_mutex_unlock(&props->print_lock);
 	}
 }
