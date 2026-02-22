@@ -6,13 +6,13 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:52 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/14 00:08:47 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/22 02:41:56 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void	eat(t_philo *philo)
+void eat(t_philo *philo)
 {
 	pthread_mutex_lock(philo->first_fork);
 	safe_print(philo, "has taken fork");
@@ -28,32 +28,44 @@ void	eat(t_philo *philo)
 	pthread_mutex_unlock(philo->second_fork);
 }
 
-void	*track(void *arg)
+void *track(void *arg)
 {
-	t_monitor	*mon;
-	t_props		*props;
+	t_monitor *mon;
+	t_props *props;
+	t_philo *philo;
+	int i;
 
 	mon = (t_monitor *)arg;
 	props = mon->props;
-	while (!died(props))
+	while (1)
 	{
-		if (all_full(props))
-			return (NULL);
+		i = -1;
+		while (++i < props->n_philos)
+		{
+			philo = &props->philos[i];
+			pthread_mutex_lock(&philo->lock);
+			if (died(props, philo) || all_full(props, philo))
+			{
+				pthread_mutex_unlock(&philo->lock);
+				return NULL;
+			}
+			pthread_mutex_unlock(&philo->lock);
+		}
 		usleep(100);
 	}
 	return (NULL);
 }
 
-void	*live(void *arg)
+void *live(void *arg)
 {
-	t_philo	*philo;
-	t_props	*props;
+	t_philo *philo;
+	t_props *props;
 
 	philo = (t_philo *)arg;
 	props = philo->props;
 	increment_long(&philo->props->lock, &philo->props->n_ready);
 	while (!start_times_available(philo->props))
-		usleep(20);
+		;
 	if (philo->id % 2)
 		usleep(1000);
 	while (!sim_ended(props))
@@ -68,21 +80,21 @@ void	*live(void *arg)
 		if (sim_ended(props))
 			return (NULL);
 		safe_print(philo, "is thinking");
-		usleep(500);
+		usleep(300);
 	}
 	return (NULL);
 }
 
-void	*single_philo(void *arg)
+void *single_philo(void *arg)
 {
-	t_philo	*philo;
-	t_props	*props;
+	t_philo *philo;
+	t_props *props;
 
 	philo = (t_philo *)arg;
 	props = philo->props;
 	increment_long(&props->lock, &props->n_ready);
 	while (!start_times_available(props))
-		usleep(20);
+		;
 	pthread_mutex_lock(philo->second_fork);
 	safe_print(philo, "has taken fork");
 	safe_sleep(philo->props->t_to_die, philo);
@@ -90,28 +102,28 @@ void	*single_philo(void *arg)
 	return (NULL);
 }
 
-void	sim_dinner(t_props *props)
+void sim_dinner(t_props *props)
 {
-	t_monitor	*mon;
-	int			i;
+	t_monitor *mon;
+	int i;
 
 	mon = malloc(sizeof(t_monitor));
 	if (!mon)
-		return ;
+		return;
 	props->monitor = mon;
 	mon->props = props;
 	if (props->n_philos == 1)
 		pthread_create(&props->philos[0].thread, NULL, single_philo,
-			(void *)&props->philos[0]);
+					   (void *)&props->philos[0]);
 	else
 	{
 		i = -1;
 		while (++i < props->n_philos)
 			pthread_create(&props->philos[i].thread, NULL, live,
-				(void *)&props->philos[i]);
+						   (void *)&props->philos[i]);
 	}
 	while (get_long(&props->lock, &props->n_ready) != props->n_philos)
-		usleep(20);
+		;
 	set_start_time(props);
 	pthread_create(&mon->tracker, NULL, track, (void *)mon);
 	i = -1;

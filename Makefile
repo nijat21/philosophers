@@ -5,7 +5,7 @@ CC=cc
 CFLAGS= -g -Wall -Wextra -Werror
 
 SRCS:= philo.c init.c utils.c threads.c safe_functions.c setters_getters.c \
-       checkers.c
+       checkers.c ft_putstr_fd.c
 OBJS:=$(SRCS:%.c=%.o)
 
 
