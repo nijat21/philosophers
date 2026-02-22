@@ -1,8 +1,8 @@
-# Philosophers (Dining Philosophers Problem)
+This project has been created as part of the 42 curriculum by nismayil
 
-![philosophers](/Dining_philosophers.png)
+# Dining Philosophers Problem
 
-## Problem Description
+## Description
 
 The Dining Philosophers problem is a classic synchronization problem in computer science. It involves a group of philosophers sitting around a circular table, each with a plate of spaghetti and a fork between them. To eat, a philosopher needs to pick up both the fork to their left and the right. However, there are exactly as many forks as philosophers, leading to a potential deadlock or starvation scenario.
 
@@ -31,7 +31,7 @@ This implementation uses multithreading in C with POSIX threads (pthreads) and m
 - Colored output for better visualization
 - Robust error handling and input validation
 
-## How to Compile and Run
+## Instructions
 
 ### Prerequisites
 
@@ -60,9 +60,9 @@ make
 
 ### Example
 
-```bash
+````bash
 ./philo 5 800 200 200 7
-```
+```https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
 
 This runs a simulation with 5 philosophers, 800ms time to die, 200ms eat time, 200ms sleep time, and each philosopher must eat 7 times.
 
@@ -77,7 +77,7 @@ The program outputs timestamped messages showing philosopher actions:
 - Death (if a philosopher dies)
 
 ## Technical Implementation
-
+https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
 - **Language**: C with POSIX threads
 - **Synchronization**: Mutexes for fork access and shared data protection
 - **Deadlock Prevention**: Alternating fork pickup order for philosophers
@@ -86,3 +86,10 @@ The program outputs timestamped messages showing philosopher actions:
 - **Memory Management**: Proper cleanup of threads and mutexes
 
 The solution ensures thread safety, prevents race conditions, and provides a realistic simulation of the classic concurrency problem.
+
+## Resources
+
+- Chat GPT was used for the quick grasp of concepts of Threads and Mutexes
+- Code some structure (setters_getters and minor few) was inspired by "https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D"
+https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
+````

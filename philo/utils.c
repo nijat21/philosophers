@@ -6,15 +6,15 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:42 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/21 19:13:51 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/22 15:00:48 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-int custom_atoi(char *str, int *err)
+int	custom_atoi(char *str, int *err)
 {
-	double res;
+	double	res;
 
 	while (*str == ' ')
 		str++;
@@ -41,23 +41,23 @@ int custom_atoi(char *str, int *err)
 	return ((int)res);
 }
 
-long get_ms(void)
+long	get_ms(void)
 {
-	struct timeval tv;
+	struct timeval	tv;
 
 	if (gettimeofday(&tv, NULL) < 0)
 	{
 		perror("gettimeofday");
 		return (-1);
 	}
-	return (long)(tv.tv_sec * 1e3 + tv.tv_usec / 1e3);
+	return ((long)(tv.tv_sec * 1e3 + tv.tv_usec / 1e3));
 }
 
-void assign_forks(t_philo *philo, pthread_mutex_t *forks)
+void	assign_forks(t_philo *philo, pthread_mutex_t *forks)
 {
-	int n_philos;
-	long first;
-	long second;
+	int		n_philos;
+	long	first;
+	long	second;
 
 	n_philos = philo->props->n_philos;
 	if (philo->id % 2)
@@ -74,9 +74,9 @@ void assign_forks(t_philo *philo, pthread_mutex_t *forks)
 	philo->second_fork = &forks[second];
 }
 
-void clear_all(t_props *props)
+void	clear_all(t_props *props)
 {
-	int i;
+	int	i;
 
 	i = -1;
 	while (++i < props->n_philos)
@@ -90,4 +90,14 @@ void clear_all(t_props *props)
 	free(props->philos);
 	free(props->monitor);
 	free(props);
+}
+
+void	join_threads(t_props *props)
+{
+	int	i;
+
+	i = -1;
+	while (++i < props->n_philos)
+		pthread_join(props->philos[i].thread, NULL);
+	pthread_join(props->monitor->tracker, NULL);
 }

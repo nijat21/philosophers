@@ -12,10 +12,10 @@
 
 #include "philo.h"
 
-void set_start_time(t_props *props)
+void	set_start_time(t_props *props)
 {
-	int i;
-	t_philo *philo;
+	int		i;
+	t_philo	*philo;
 
 	pthread_mutex_lock(&props->lock);
 	props->start_t_ms = get_ms();
@@ -32,10 +32,10 @@ void set_start_time(t_props *props)
 	pthread_mutex_unlock(&props->lock);
 }
 
-void philos_init(t_props *props)
+void	philos_init(t_props *props)
 {
-	int i;
-	t_philo *philos;
+	int		i;
+	t_philo	*philos;
 
 	philos = props->philos;
 	i = -1;
@@ -52,9 +52,9 @@ void philos_init(t_props *props)
 	}
 }
 
-static int intput_to_props(int ac, char *av[], t_props *props)
+static int	intput_to_props(int ac, char *av[], t_props *props)
 {
-	int err;
+	int	err;
 
 	props->n_philos = custom_atoi(av[1], &err);
 	props->t_to_die = custom_atoi(av[2], &err);
@@ -79,9 +79,9 @@ static int intput_to_props(int ac, char *av[], t_props *props)
 	return (0);
 }
 
-t_props *props_philos_init(int ac, char **av, t_props *props)
+t_props	*props_philos_init(int ac, char **av, t_props *props)
 {
-	int i;
+	int	i;
 
 	if (intput_to_props(ac, av, props))
 	{

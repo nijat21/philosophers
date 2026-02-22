@@ -12,9 +12,9 @@
 
 #include "philo.h"
 
-void *safe_malloc(size_t bytes)
+void	*safe_malloc(size_t bytes)
 {
-	void *mem;
+	void	*mem;
 
 	mem = malloc(bytes);
 	if (!mem)
@@ -25,22 +25,22 @@ void *safe_malloc(size_t bytes)
 	return (mem);
 }
 
-void safe_sleep(long ms, t_philo *philo)
+void	safe_sleep(long ms, t_philo *philo)
 {
-	long start;
+	long	start;
 
 	start = get_ms();
 	while (get_ms() - start < ms)
 	{
 		if (get_bool(&philo->props->lock, &philo->props->sim_end))
-			return;
+			return ;
 		usleep(100);
 	}
 }
 
-void safe_print(t_philo *philo, char *msg)
+void	safe_print(t_philo *philo, char *msg)
 {
-	t_props *props;
+	t_props	*props;
 
 	props = philo->props;
 	pthread_mutex_lock(&props->lock);
@@ -48,7 +48,7 @@ void safe_print(t_philo *philo, char *msg)
 	{
 		pthread_mutex_lock(&props->print_lock);
 		printf(GREEN "%ld" RESET " %ld %s\n", get_ms() - props->start_t_ms,
-			   philo->id, msg);
+			philo->id, msg);
 		pthread_mutex_unlock(&props->print_lock);
 	}
 	pthread_mutex_unlock(&props->lock);
