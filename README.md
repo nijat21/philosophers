@@ -24,6 +24,13 @@ This implementation uses multithreading in C with POSIX threads (pthreads) and m
 - **Thread-safe operations** for shared data access
 
 ### Key Features:
+Host github.com-nijat21
+  HostName github.com
+  IdentityFile ~/.ssh/id_ed25519
+
+Host github.com-aichawar
+  HostName github.com
+  IdentityFile ~/.ssh/id_rsa
 
 - Handles any number of philosophers (including edge cases like 1 philosopher)
 - Configurable timing parameters for eating, sleeping, and time-to-die
@@ -86,10 +93,10 @@ https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3
 - **Memory Management**: Proper cleanup of threads and mutexes
 
 The solution ensures thread safety, prevents race conditions, and provides a realistic simulation of the classic concurrency problem.
+````
 
 ## Resources
 
 - Chat GPT was used for the quick grasp of concepts of Threads and Mutexes
 - Code some structure (setters_getters and minor few) was inspired by "https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D"
 https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
-````
