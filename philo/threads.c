@@ -6,7 +6,7 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:52 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/22 14:51:22 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/27 21:00:12 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,22 @@ void	*track(void *arg)
 	return (NULL);
 }
 
+void	think(t_philo *philo)
+{
+	t_props	*props;
+	long	think_time;
+
+	props = philo->props;
+	safe_print(philo, "is thinking");
+	if (props->n_philos % 2)
+	{
+		think_time = props->t_to_eat * 2 - props->t_to_sleep;
+		if (think_time < 0)
+			think_time = 0;
+		safe_sleep(think_time * 0.5, philo);
+	}
+}
+
 void	*live(void *arg)
 {
 	t_philo	*philo;
@@ -67,7 +83,7 @@ void	*live(void *arg)
 	while (!start_times_available(philo->props))
 		;
 	if (philo->id % 2)
-		usleep(1000);
+		safe_sleep(props->t_to_eat * 0.3, philo);
 	while (!sim_ended(props))
 	{
 		eat(philo);
@@ -79,26 +95,8 @@ void	*live(void *arg)
 		safe_sleep(philo->props->t_to_sleep, philo);
 		if (sim_ended(props))
 			return (NULL);
-		safe_print(philo, "is thinking");
-		usleep(300);
+		think(philo);
 	}
-	return (NULL);
-}
-
-void	*single_philo(void *arg)
-{
-	t_philo	*philo;
-	t_props	*props;
-
-	philo = (t_philo *)arg;
-	props = philo->props;
-	increment_long(&props->lock, &props->n_ready);
-	while (!start_times_available(props))
-		;
-	pthread_mutex_lock(philo->second_fork);
-	safe_print(philo, "has taken fork");
-	safe_sleep(philo->props->t_to_die, philo);
-	pthread_mutex_unlock(philo->second_fork);
 	return (NULL);
 }
 

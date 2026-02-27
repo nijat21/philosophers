@@ -6,7 +6,7 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/22 14:32:44 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/22 14:59:18 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/27 21:01:10 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,7 @@ typedef struct s_monitor
 }							t_monitor;
 
 // simulation
+void						*single_philo(void *arg);
 void						sim_dinner(t_props *props);
 
 // checkers
