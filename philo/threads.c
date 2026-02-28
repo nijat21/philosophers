@@ -6,7 +6,7 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:52 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/28 18:25:55 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/28 19:09:30 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@ void eat(t_philo *philo)
 	safe_print(philo, "is eating");
 	safe_sleep(philo->props->t_to_eat, philo);
 	set_bool(&philo->lock, &philo->is_eating, false);
-	pthread_mutex_unlock(philo->first_fork);
 	pthread_mutex_unlock(philo->second_fork);
+	pthread_mutex_unlock(philo->first_fork);
 }
 
 void *track(void *arg)
@@ -83,7 +83,7 @@ void *live(void *arg)
 	props = philo->props;
 	increment_long(&philo->props->lock, &philo->props->n_ready);
 	while (!start_times_available(philo->props))
-		;
+		usleep(50);
 	if (philo->id % 2)
 		safe_sleep(props->t_to_eat * 0.3, philo);
 	while (!sim_ended(props))
@@ -125,8 +125,6 @@ void sim_dinner(t_props *props)
 	while (get_long(&props->lock, &props->n_ready) != props->n_philos)
 		;
 	set_start_time(props);
-	while (!start_times_available(props))
-		;
 	pthread_create(&mon->tracker, NULL, track, (void *)mon);
 	join_threads(props);
 }

@@ -6,7 +6,7 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:48 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/28 17:56:22 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/28 19:06:21 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ bool all_full(t_props *props, t_philo *philo)
 		}
 		pthread_mutex_unlock(&props->lock);
 	}
-	else
+	else	
 		pthread_mutex_unlock(&philo->lock);
 	return (false);
 }

@@ -6,20 +6,21 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:30 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/21 20:32:06 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/28 19:04:34 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void	set_start_time(t_props *props)
+void set_start_time(t_props *props)
 {
-	int		i;
-	t_philo	*philo;
+	int i;
+	t_philo *philo;
 
 	pthread_mutex_lock(&props->lock);
 	props->start_t_ms = get_ms();
 	props->start_t_set = true;
+	pthread_mutex_unlock(&props->lock);
 	i = -1;
 	while (++i < props->n_philos)
 	{
@@ -29,13 +30,12 @@ void	set_start_time(t_props *props)
 		philo->born_ate_in_ms = props->start_t_ms;
 		pthread_mutex_unlock(&philo->lock);
 	}
-	pthread_mutex_unlock(&props->lock);
 }
 
-void	philos_init(t_props *props)
+void philos_init(t_props *props)
 {
-	int		i;
-	t_philo	*philos;
+	int i;
+	t_philo *philos;
 
 	philos = props->philos;
 	i = -1;
@@ -52,9 +52,9 @@ void	philos_init(t_props *props)
 	}
 }
 
-static int	intput_to_props(int ac, char *av[], t_props *props)
+static int intput_to_props(int ac, char *av[], t_props *props)
 {
-	int	err;
+	int err;
 
 	props->n_philos = custom_atoi(av[1], &err);
 	props->t_to_die = custom_atoi(av[2], &err);
@@ -79,9 +79,9 @@ static int	intput_to_props(int ac, char *av[], t_props *props)
 	return (0);
 }
 
-t_props	*props_philos_init(int ac, char **av, t_props *props)
+t_props *props_philos_init(int ac, char **av, t_props *props)
 {
-	int	i;
+	int i;
 
 	if (intput_to_props(ac, av, props))
 	{
