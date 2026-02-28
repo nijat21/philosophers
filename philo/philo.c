@@ -6,7 +6,7 @@
 /*   By: nismayil <nismayil@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 21:20:58 by nismayil          #+#    #+#             */
-/*   Updated: 2026/02/22 14:31:43 by nismayil         ###   ########.fr       */
+/*   Updated: 2026/02/28 19:30:59 by nismayil         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ static int	limits_check(int res, int i)
 	else if (i > 1 && i < 5 && res < 60)
 	{
 		ft_putstr_fd("Error: Time to die,time to sleep and time \
-				to eat should at least be 60ms\n", 2);
+				to eat should at least be 60ms\n",
+						2);
 		return (4);
 	}
 	else if (i != 5 && res <= 0)
@@ -66,7 +67,8 @@ static int	invalid_input(int ac, char *av[])
 	{
 		ft_putstr_fd(RED "Error: program should be run with following \
 			arguments->\n ./philo n_philos t_to_die t_to_eat t_to_sleep \
-			[n_must_eat](optional)\n" RESET, 2);
+			[n_must_eat](optional)\n" RESET,
+						2);
 		return (1);
 	}
 	if (ac == 6 && atoi(av[5]) == 0)

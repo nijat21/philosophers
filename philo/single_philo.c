@@ -12,10 +12,10 @@
 
 #include "philo.h"
 
-void *single_philo(void *arg)
+void	*single_philo(void *arg)
 {
-	t_philo *philo;
-	t_props *props;
+	t_philo	*philo;
+	t_props	*props;
 
 	philo = (t_philo *)arg;
 	props = philo->props;

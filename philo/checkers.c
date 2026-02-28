@@ -12,12 +12,12 @@
 
 #include "philo.h"
 
-bool sim_ended(t_props *props)
+bool	sim_ended(t_props *props)
 {
 	return (get_bool(&props->lock, &props->sim_end));
 }
 
-bool all_full(t_props *props, t_philo *philo)
+bool	all_full(t_props *props, t_philo *philo)
 {
 	pthread_mutex_lock(&philo->lock);
 	if (!philo->counted && philo->times_ate == props->n_must_eat)
@@ -35,15 +35,15 @@ bool all_full(t_props *props, t_philo *philo)
 		}
 		pthread_mutex_unlock(&props->lock);
 	}
-	else	
+	else
 		pthread_mutex_unlock(&philo->lock);
 	return (false);
 }
 
-bool died(t_props *props, t_philo *philo)
+bool	died(t_props *props, t_philo *philo)
 {
-	long last_ate;
-	bool is_eating;
+	long	last_ate;
+	bool	is_eating;
 
 	pthread_mutex_lock(&philo->lock);
 	last_ate = philo->born_ate_in_ms;
@@ -54,7 +54,7 @@ bool died(t_props *props, t_philo *philo)
 		set_bool(&philo->props->lock, &philo->props->sim_end, true);
 		pthread_mutex_lock(&props->print_lock);
 		printf(RED "%ld" RESET " %ld %s\n", get_ms() - props->start_t_ms,
-			   philo->id, "died");
+			philo->id, "died");
 		usleep(10);
 		pthread_mutex_unlock(&props->print_lock);
 		return (true);
@@ -63,10 +63,10 @@ bool died(t_props *props, t_philo *philo)
 	return (false);
 }
 
-bool start_times_available(t_props *props)
+bool	start_times_available(t_props *props)
 {
-	t_philo *philo;
-	int i;
+	t_philo	*philo;
+	int		i;
 
 	if (!get_bool(&props->lock, &props->start_t_set))
 		return (false);
