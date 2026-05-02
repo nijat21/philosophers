@@ -69,7 +69,6 @@ make
 
 ````bash
 ./philo 5 800 200 200 7
-```https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
 
 This runs a simulation with 5 philosophers, 800ms time to die, 200ms eat time, 200ms sleep time, and each philosopher must eat 7 times.
 
@@ -84,7 +83,6 @@ The program outputs timestamped messages showing philosopher actions:
 - Death (if a philosopher dies)
 
 ## Technical Implementation
-https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
 - **Language**: C with POSIX threads
 - **Synchronization**: Mutexes for fork access and shared data protection
 - **Deadlock Prevention**: Alternating fork pickup order for philosophers
@@ -98,5 +96,3 @@ The solution ensures thread safety, prevents race conditions, and provides a rea
 ## Resources
 
 - Chat GPT was used for the quick grasp of concepts of Threads and Mutexes
-- Code some structure (setters_getters and minor few) was inspired by "https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D"
-https://www.youtube.com/watch?v=zOpzGHwJ3MU&pp=ygUUT2NlYW5pbyBwaGlsb3NvaHBlcnM%3D
